@@ -5,7 +5,7 @@ import datetime
 from typing import List
 from typing import Optional
 
-def save_showings_old(con: sqlite3.Connection, showings: list[structs.Showing], revision: int):
+def save_showings_old(con: sqlite3.Connection, showings: List[structs.Showing], revision: int):
     data = [(s.movie_title.strip(), s.venue_name.strip(), s.start_time_local.isoformat(), s.network_name, revision) for s in showings]
     con.executemany('INSERT INTO showings_old(movie_title, venue_name, start_time_local, network_name, revision) '
                     'VALUES(?, ?, ?, ?, ?)',
@@ -13,7 +13,7 @@ def save_showings_old(con: sqlite3.Connection, showings: list[structs.Showing], 
     con.commit()
     print(f'Saved {len(showings)} showings')
 
-def save_showings(con: sqlite3.Connection, showings: list[structs.ShowingNew], revision: int):
+def save_showings(con: sqlite3.Connection, showings: List[structs.ShowingNew], revision: int):
     data = [(s.id_.strip(), s.movie_id.strip(), s.venue_id.strip(), s.start_time_local.isoformat(), s.network_name, s.link, s.available, revision) for s in showings]
     con.executemany('INSERT INTO showings(id, movie_id, venue_id, start_time_local, network_name, link, available, revision) '
                     'VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
@@ -21,7 +21,7 @@ def save_showings(con: sqlite3.Connection, showings: list[structs.ShowingNew], r
     con.commit()
     print(f'Saved {len(showings)} showings')
 
-def save_venues(con: sqlite3.Connection, venues: list[structs.Venue], revision: int):
+def save_venues(con: sqlite3.Connection, venues: List[structs.Venue], revision: int):
     data = [(v.id_.strip(), v.name.strip(), v.network_name, v.lat, v.lon, v.link, v.available, revision) for v in venues]
     con.executemany('INSERT INTO venues(id, name, network_name, lat, lon, link, available, revision) '
                     'VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
@@ -29,7 +29,7 @@ def save_venues(con: sqlite3.Connection, venues: list[structs.Venue], revision: 
     con.commit()
     print(f'Saved {len(venues)} venues')
 
-def save_movies(con: sqlite3.Connection, movies: list[structs.Movie], revision: int):
+def save_movies(con: sqlite3.Connection, movies: List[structs.Movie], revision: int):
     data = [(m.id_.strip(), m.title.strip(), m.network_name, m.link, m.available, revision) for m in movies]
     con.executemany('INSERT INTO movies(id, title, network_name, link, available, revision) '
                     'VALUES(?, ?, ?, ?, ?, ?)',

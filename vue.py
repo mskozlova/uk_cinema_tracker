@@ -5,6 +5,8 @@ import datetime
 import structs
 import logging
 
+from typing import List
+
 
 formatter = logging.Formatter('%(asctime)s, %(name)s %(levelname)s %(message)s')
 handler = logging.FileHandler('vue.log')
@@ -41,7 +43,7 @@ def get_venue_location(venue_link_name):
         time.sleep(5.0)
     raise Exception(f'Cannot find directions to {venue_link_name} VUE cinema')
 
-def get_all_venues(**kwargs) -> list[structs.Venue]:
+def get_all_venues(**kwargs) -> List[structs.Venue]:
     url = 'https://www.myvue.com/data/locations/'
     headers = {
   'authority': 'www.myvue.com' ,
@@ -236,7 +238,7 @@ def build_showing(movie_name, venue_name, showing_date, showing_time):
     start_time_local = build_datetime(showing_date, showing_time)
     return structs.Showing(movie_name, venue_name, start_time_local, 'VUE')
 
-def get_all_showings_old(**kwargs) -> list[structs.Showing]:
+def get_all_showings_old(**kwargs) -> List[structs.Showing]:
     movies = get_movie_ids()
     venues = get_venue_ids()
 
@@ -257,7 +259,7 @@ def get_all_showings_old(**kwargs) -> list[structs.Showing]:
                 all_showings.append(build_showing(movie_name, venue_name, showing_date, showing_time))
     return all_showings
 
-def get_all_showings(**kwargs) -> list[structs.ShowingNew]:
+def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
     movies = get_movie_ids()
     venues = get_venue_ids()
 

@@ -5,6 +5,8 @@ import datetime
 import time
 import re
 
+from typing import List
+
 formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
 handler = logging.FileHandler('odeon.log')
 handler.setFormatter(formatter)
@@ -71,7 +73,7 @@ def get_venues():
         venues.append((id_, normalized_name))
     return venues
 
-def get_all_movies(**kwargs) -> list[structs.Movie]:
+def get_all_movies(**kwargs) -> List[structs.Movie]:
     url = 'https://odeon-vwc.webtrends-optimize.workers.dev/FilmsSchedule'
     headers = {
   'authority': 'odeon-vwc.webtrends-optimize.workers.dev',
@@ -106,7 +108,7 @@ def get_all_movies(**kwargs) -> list[structs.Movie]:
     logger.info(f"Got {len(movies)} movies from ODEON")
     return movies
 
-def get_all_showings_old(**kwargs) -> list[structs.Showing]:
+def get_all_showings_old(**kwargs) -> List[structs.Showing]:
     venues = get_venues()
     name_by_id = {id_: name for id_, name in venues}
     url = 'https://odeon-vwc.webtrends-optimize.workers.dev/FilmsSchedule'
@@ -142,7 +144,7 @@ def get_all_showings_old(**kwargs) -> list[structs.Showing]:
                 all_showings.append(structs.Showing(title, venue_name, time, 'ODEON'))
     return all_showings
 
-def get_all_showings(**kwargs) -> list[structs.ShowingNew]:
+def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
     url = 'https://odeon-vwc.webtrends-optimize.workers.dev/FilmsSchedule'
     headers = {
   'authority': 'odeon-vwc.webtrends-optimize.workers.dev',
