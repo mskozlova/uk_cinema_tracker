@@ -6,7 +6,7 @@ import structs
 import logging
 import json
 import collections
-from functools import cache
+from functools import lru_cache
 from typing import List
 
 
@@ -18,7 +18,7 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
 
-@cache
+@lru_cache
 def get_token(revision):
     url = 'https://www.curzon.com/films/'
     headers = {

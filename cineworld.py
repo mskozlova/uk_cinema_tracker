@@ -5,7 +5,7 @@ import logging
 import time
 from typing import List
 
-from functools import cache
+from functools import lru_cache
 
 formatter = logging.Formatter('%(asctime)s %(name)s %(levelname)s %(message)s')
 handler = logging.FileHandler('cineworld.log')
@@ -16,7 +16,7 @@ logger.addHandler(handler)
 
 MAGIC_ID = '10108'
 
-@cache
+@lru_cache
 def get_all_venues(revision):
     until_date = (datetime.datetime.now().date() + datetime.timedelta(days=365)).isoformat()
     url = f'https://www.cineworld.co.uk/uk/data-api-service/v1/quickbook/{MAGIC_ID}/cinemas/with-event/until/{until_date}?attr=&lang=en_GB'
@@ -74,7 +74,7 @@ def get_venues():
         venues.append((id_, name))
     return venues
 
-@cache
+@lru_cache
 def get_venue_dates(venue_id, revision):
     until_date = (datetime.datetime.now().date() + datetime.timedelta(days=365)).isoformat()
     url = f'https://www.cineworld.co.uk/uk/data-api-service/v1/quickbook/{MAGIC_ID}/dates/in-cinema/{venue_id}/until/{until_date}?attr=&lang=en_GB'
@@ -96,7 +96,7 @@ def get_venue_dates(venue_id, revision):
     js = r.json()
     return js['body']['dates']
 
-@cache
+@lru_cache
 def get_film_events_json(venue_id, date, revision):
     url = f'https://www.cineworld.co.uk/uk/data-api-service/v1/quickbook/{MAGIC_ID}/film-events/in-cinema/{venue_id}/at-date/{date}?attr=&lang=en_GB'
     headers = {
