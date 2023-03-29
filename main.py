@@ -57,9 +57,6 @@ with concurrent.futures.ThreadPoolExecutor() as executor:
     while running_tasks:
         failed, running_tasks = concurrent.futures.wait(running_tasks, return_when=concurrent.futures.FIRST_EXCEPTION, timeout=3.0)
         for task in failed:
-            err = task.exception()
-            if err is not None:
-                raise RuntimeError(err)
             venues, movies, showings = task.result()
             all_venues.extend(venues)
             all_movies.extend(movies)
