@@ -54,7 +54,7 @@ def get_imax_movies():
             if line == '  ],':
                 break
             logger.info(f"Parsing {line}")
-            parts = ast.literal_eval(line.rstrip(','))
+            parts = ast.literal_eval(line.strip().rstrip(','))
             # hh =  [ "Id", "Object Type", "Type", "Category", "Name", "Description", "Short Description", "-", "- time", "- date", "- month", "- year", "End Date", "On Sale Date", "Sales Status", "Availability", "Available Number", "Keywords", "Additional Info", "Group", "Image 1", "Image 2", "image1_alt_text", "image2_alt_text", "thumbnail", "Data 1", "Data 2", "Data 3", "Data 4", "Data 5", "Data 6", "Data 7", "Data 8", "Data 9", "Data 10", "Data 11", "Data 12", "Data 13", "Data 14", "Data 15", "Data 16", "filter1", "filter2", "filter3", "filter4", "filter_parent1", "filter_child2", "filter_parent2", "filter_child1", "multifilter1", "multifilter2", "Organization Short Description", "Sales Type", "Options", "Street", "City", "Province / State", "Postal Code", "Country", "Longitude", "Latitude", "Venue ID", "Venue Name", "Venue Description", "Venue Short Description", "Venue Group", "Venue Data 1", "Venue Data 2", "Venue Data 3", "Venue Data 4", "Venue Data 5", "Venue Data 6", "Venue Data 7", "Venue Data 8", "Venue Data 9", "Venue Data 10", "Venue Data 11", "Venue Data 12", "Venue Type", "Series Name", "Minimum Price", "Maximum Price", "Upsell Article", "Add-on Article", "email", "e_address1", "e_address2", "e_address3", "customer_id", "tracking_code", "twitter_search_term", "external_reference_code", "access", "Venue Organization Id", "Meta Description", "" ]
             title = parts[5]
             venue_name = 'BFI IMAX'
@@ -105,7 +105,7 @@ def get_regular_movies():
             if line == '  ],':
                 break
             logger.info(f"Parsing {line}")
-            parts = ast.literal_eval(line.rstrip(','))
+            parts = ast.literal_eval(line.strip().rstrip(','))
             # hh =  [ "Id", "Object Type", "Type", "Category", "Name", "Description", "Short Description", "-", "- time", "- date", "- month", "- year", "End Date", "On Sale Date", "Sales Status", "Availability", "Available Number", "Keywords", "Additional Info", "Group", "Image 1", "Image 2", "image1_alt_text", "image2_alt_text", "thumbnail", "Data 1", "Data 2", "Data 3", "Data 4", "Data 5", "Data 6", "Data 7", "Data 8", "Data 9", "Data 10", "Data 11", "Data 12", "Data 13", "Data 14", "Data 15", "Data 16", "filter1", "filter2", "filter3", "filter4", "filter_parent1", "filter_child2", "filter_parent2", "filter_child1", "multifilter1", "multifilter2", "Organization Short Description", "Sales Type", "Options", "Street", "City", "Province / State", "Postal Code", "Country", "Longitude", "Latitude", "Venue ID", "Venue Name", "Venue Description", "Venue Short Description", "Venue Group", "Venue Data 1", "Venue Data 2", "Venue Data 3", "Venue Data 4", "Venue Data 5", "Venue Data 6", "Venue Data 7", "Venue Data 8", "Venue Data 9", "Venue Data 10", "Venue Data 11", "Venue Data 12", "Venue Type", "Series Name", "Minimum Price", "Maximum Price", "Upsell Article", "Add-on Article", "email", "e_address1", "e_address2", "e_address3", "customer_id", "tracking_code", "twitter_search_term", "external_reference_code", "access", "Venue Organization Id", "Meta Description", "" ]
             title = parts[5]
             venue_name = 'BFI Southbank'
@@ -162,7 +162,7 @@ def get_imax_showings_old():
             if line == '  ],':
                 break
             logger.info(f"Parsing {line}")
-            parts = ast.literal_eval(line.rstrip(','))
+            parts = ast.literal_eval(line.strip().rstrip(','))
             title = parts[5]
             venue_name = parts[63]
             start_time = datetime.datetime.fromisoformat(f"{parts[11]}-{int(parts[10])+1:02}-{int(parts[9]):02}T{parts[8]}:00")
@@ -205,7 +205,7 @@ def get_imax_showings():
             if line == '  ],':
                 break
             logger.info(f"Parsing {line}")
-            parts = ast.literal_eval(line.rstrip(','))
+            parts = ast.literal_eval(line.strip().rstrip(','))
             id_ = parts[0]
             title = parts[5]
             venue_name = 'BFI IMAX'
@@ -298,7 +298,7 @@ def get_regular_showings():
             if line == '  ],':
                 break
             logger.info(f"Parsing {line}")
-            parts = ast.literal_eval(line.rstrip(','))
+            parts = ast.literal_eval(line.strip().rstrip(','))
             hh = [ "id", "object_type", "type", "category", "name", "description", "short_description", "start_date", "start_date_time", "start_date_date", "start_date_month", "start_date_year", "end_date", "on_sale_date", "sales_status", "availability_status", "availability_num", "keywords", "additional_info", "group", "image1", "image2", "image1_alt_text", "image2_alt_text", "thumbnail", "data1", "data2", "data3", "data4", "data5", "data6", "data7", "data8", "data9", "data10", "data11", "data12", "data13", "data14", "data15", "data16", "filter1", "filter2", "filter3", "filter4", "filter_parent1", "filter_child2", "filter_parent2", "filter_child1", "multifilter1", "multifilter2", "organization_short_description", "sales_type", "options", "street", "city", "state", "zip", "country", "longitude", "latitude", "venue_id", "venue_name", "venue_description", "venue_short_description", "venue_group", "venue_data1", "venue_data2", "venue_data3", "venue_data4", "venue_data5", "venue_data6", "venue_data7", "venue_data8", "venue_data9", "venue_data10", "venue_data11", "venue_data12", "venue_type", "series_name", "min_price", "max_price", "upsell_article_id", "addon_article_id", "email", "e_address1", "e_address2", "e_address3", "customer_id", "tracking_code", "twitter_search_term", "external_reference_code", "access", "organization_id", "meta_description", "" ]
             id_ = parts[0]
             title = parts[5]
