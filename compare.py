@@ -91,8 +91,10 @@ def _get_movie_diff(movies1: List[structs.Movie], movies2: List[structs.Movie], 
     
     return MovieDiff(deleted, changed, added)
 
-def _get_showing_diff(showings1: List[structs.Showing], showings2: List[structs.Showing], logger: logging.Logger) -> ShowingDiff:
-    def get_id(showing: structs.Showing):
+def _get_showing_diff(showings1: List[structs.ShowingNew], showings2: List[structs.ShowingNew], logger: logging.Logger) -> ShowingDiff:
+    def get_id(showing: structs.ShowingNew):
+        if showing.id_:
+            return (showing.network_name, showing.id_, showing.venue_id, showing.movie_id)
         return (showing.network_name, showing.venue_id, showing.movie_id, showing.start_time_local)
     ids1 = {get_id(showing): showing for showing in showings1}
     if len(ids1) != len(showings1):
