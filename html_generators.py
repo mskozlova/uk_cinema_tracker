@@ -1,4 +1,5 @@
 import sqlite3
+import datetime
 
 from urllib.parse import urlparse
 from urllib.parse import parse_qs
@@ -89,8 +90,8 @@ def generate_diff_page(path: str, logger):
     {changed_showings_html_p}
     """ if changed_showings_html_p else ""
 
-    options1 = "".join([f'<option value="{rev}" {"selected" if rev == rev1 else ""}>{rev}</option>' for rev in all_revisions])
-    options2 = "".join([f'<option value="{rev}" {"selected" if rev == rev2 else ""}>{rev}</option>' for rev in all_revisions])
+    options1 = "".join([f'<option value="{rev}" {"selected" if rev == rev1 else ""}>{datetime.datetime.fromtimestamp(rev/1000000).isoformat()} ({rev})</option>' for rev in all_revisions])
+    options2 = "".join([f'<option value="{rev}" {"selected" if rev == rev2 else ""}>{datetime.datetime.fromtimestamp(rev/1000000).isoformat()} ({rev})</option>' for rev in all_revisions])
     script = """
     <script type="text/javascript">
     var update_link = function() {
