@@ -57,9 +57,15 @@ def main():
         while running_tasks:
             failed, running_tasks = concurrent.futures.wait(running_tasks, return_when=concurrent.futures.FIRST_EXCEPTION, timeout=3.0)
             for task in failed:
-                logger.error(f"Exception: {task.exception()}", exc_info=task.exception())
-                task.result()
-                exit(1)
+                exc = task.exception()
+                if exc:
+                    logger.error(f"Exception: {exc}", exc_info=exc)
+                    task.result()
+                    exit(1)
+                venues, movies, showings = task.result()
+                all_venues.extend(venues)
+                all_movies.extend(movies)
+                all_showings.extend(showings)
 
             done, running_tasks = concurrent.futures.wait(running_tasks, return_when=concurrent.futures.FIRST_COMPLETED, timeout=3.0)
             for task in done:
