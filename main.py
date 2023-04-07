@@ -17,7 +17,7 @@ import time
 logging.basicConfig(filename='main.log',
                     filemode='a',
                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-                    datefmt='%Y-%m-%d,%H:%M:%S',
+                    datefmt='%Y-%m-%dT%H:%M:%S',
                     level=logging.DEBUG)
 
 logger = logging.getLogger()
