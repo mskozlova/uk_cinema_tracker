@@ -176,7 +176,7 @@ def get_imax_showings():
             price = parts[80] # min
             price = parts[81] # max
             logger.info(f"Processing {title} in {venue_name} at {start_time}")
-            showings.append(structs.ShowingNew(id_, title, venue_name, start_time, 'BFI', link, available))
+            showings.append(structs.Showing(id_, title, venue_name, start_time, 'BFI', link, available))
     logger.info(f"Got {len(showings)} IMAX showings in BFI")
     return showings
 
@@ -229,7 +229,7 @@ def get_regular_showings():
             price = parts[80] # min
             price = parts[81] # max
             logger.info(f"Processing {title} in {venue_name} at {start_time}")
-            showings.append(structs.ShowingNew(id_, title, venue_name, start_time, 'BFI', link, available))
+            showings.append(structs.Showing(id_, title, venue_name, start_time, 'BFI', link, available))
     logger.info(f"Got {len(showings)} regular showings in BFI")
     return showings
 

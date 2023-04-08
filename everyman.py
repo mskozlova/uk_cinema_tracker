@@ -113,7 +113,7 @@ def get_all_venues(**kwargs) -> List[structs.Venue]:
     return venues
 
 
-def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
+def get_all_showings(**kwargs) -> List[structs.Showing]:
     url = 'https://www.everymancinema.com/api/gatsby-source-boxofficeapi/schedule'
     headers = {
   'authority': 'www.everymancinema.com',
@@ -167,6 +167,6 @@ def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
                         id_ = showing['id']
                         start_time = datetime.datetime.fromisoformat(showing['startsAt'])
                         link = showing['data']['ticketing'][0]['urls'][0]
-                        all_showings.append(structs.ShowingNew(id_, movie_id, venue_id, start_time, 'Everyman', link, True))
+                        all_showings.append(structs.Showing(id_, movie_id, venue_id, start_time, 'Everyman', link, True))
     logger.info(f"Got {len(all_showings)} showings from Everyman")
     return all_showings

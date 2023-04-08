@@ -171,7 +171,7 @@ def get_all_dates(token):
     return sites_by_date, films_by_date
 
 
-def get_all_showings(revision, **args) -> List[structs.ShowingNew]:
+def get_all_showings(revision, **args) -> List[structs.Showing]:
     token = get_token(revision)
     sites_by_date, films_by_date = get_all_dates(token)
     dates = set(sites_by_date.keys()) & set(films_by_date.keys())
@@ -210,6 +210,6 @@ def get_all_showings(revision, **args) -> List[structs.ShowingNew]:
             link = f'https://www.curzon.com/ticketing/seats/{id_}/'
             available = not item['isSoldOut']
             screen_name = item['screenId']
-            all_showings.append(structs.ShowingNew(id_, movie_id, venue_id, start_time, 'Curzon', link, available))
+            all_showings.append(structs.Showing(id_, movie_id, venue_id, start_time, 'Curzon', link, available))
     logger.info(f"Got {len(all_showings)} showings from Curzon")
     return all_showings

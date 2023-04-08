@@ -22,13 +22,6 @@ class Movie:
 
 @dataclasses.dataclass
 class Showing:
-    movie_title: str
-    venue_name: str
-    start_time_local: datetime.datetime
-    network_name: str
-
-@dataclasses.dataclass
-class ShowingNew:
     id_: str
     movie_id: str
     venue_id: str

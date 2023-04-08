@@ -152,7 +152,7 @@ def get_all_movies(**kwargs) -> List[structs.Movie]:
     return movies
 
     
-def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
+def get_all_showings(**kwargs) -> List[structs.Showing]:
     venues = get_venues()
     venue_name_by_id = {id_: name for (id_, name) in venues}
     url = 'https://www.picturehouses.com/api/scheduled-movies-ajax'
@@ -187,6 +187,6 @@ def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
             link = f'https://ticketing.picturehouses.com/Ticketing/visSelectTickets.aspx?cinemacode={venue_id}&txtSessionId={id_}&visLang=1'
             start_time = datetime.datetime.fromisoformat(showtime['Showtime'])
             # available - showtime[SoldoutStatus]
-            all_showings.append(structs.ShowingNew(id_, movie_id, venue_id, start_time, 'Picturehouse', link, True))
+            all_showings.append(structs.Showing(id_, movie_id, venue_id, start_time, 'Picturehouse', link, True))
     logger.info(f"Got {len(all_showings)} showings from Picturehouse")
     return all_showings

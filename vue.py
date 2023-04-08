@@ -183,18 +183,13 @@ def get_movie_showings(movie_id, venue_id):
             price = time_item['default_price']
             id_ = time_item['session_id']
             link = f'https://www.myvue.com/book-tickets/summary/{venue_id}/{movie_id}/{id_}'
-            showings.append(structs.ShowingNew(id_, movie_id, venue_id, build_datetime(date, start_time), 'VUE', link, True))
+            showings.append(structs.Showing(id_, movie_id, venue_id, build_datetime(date, start_time), 'VUE', link, True))
     return showings
 
 def build_datetime(date, time):
     return datetime.datetime.strptime(f'{date} {time}', '%Y-%m-%d %I:%M %p')
 
-def build_showing(movie_name, venue_name, showing_date, showing_time):
-    start_time_local = build_datetime(showing_date, showing_time)
-    return structs.Showing(movie_name, venue_name, start_time_local, 'VUE')
-
-
-def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
+def get_all_showings(**kwargs) -> List[structs.Showing]:
     movies = get_movie_ids()
     venues = get_venue_ids()
 

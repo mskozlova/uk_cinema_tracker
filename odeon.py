@@ -83,7 +83,7 @@ def get_all_movies(**kwargs) -> List[structs.Movie]:
     return movies
 
 
-def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
+def get_all_showings(**kwargs) -> List[structs.Showing]:
     url = 'https://odeon-vwc.webtrends-optimize.workers.dev/FilmsSchedule'
     headers = {
   'authority': 'odeon-vwc.webtrends-optimize.workers.dev',
@@ -115,6 +115,6 @@ def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
                 start_time = datetime.datetime.fromisoformat(showing['Showtime'])
                 screen_name = showing['ScreenName']
                 link = f'https://www.odeon.co.uk/ticketing/seat-picker/?showtimeId={id_}'
-                all_showings.append(structs.ShowingNew(id_, movie_id, venue_id, start_time, 'ODEON', link, True))
+                all_showings.append(structs.Showing(id_, movie_id, venue_id, start_time, 'ODEON', link, True))
     logger.info(f"Got {len(all_showings)} showings from ODEON")
     return all_showings

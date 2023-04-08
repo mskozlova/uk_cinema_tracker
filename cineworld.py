@@ -142,7 +142,7 @@ def get_all_movies(revision):
     return movies
 
 
-def get_showings(venue_id, date, revision) -> List[structs.ShowingNew]:
+def get_showings(venue_id, date, revision) -> List[structs.Showing]:
     js = get_film_events_json(venue_id, date, revision)
 
     showings = []
@@ -153,7 +153,7 @@ def get_showings(venue_id, date, revision) -> List[structs.ShowingNew]:
         available = not item['soldOut']
         screen_name = item['auditorium']
         start_time = datetime.datetime.fromisoformat(item['eventDateTime'])
-        showings.append(structs.ShowingNew(id_, movie_id, venue_id, start_time, 'Cineworld', link, available))
+        showings.append(structs.Showing(id_, movie_id, venue_id, start_time, 'Cineworld', link, available))
     return showings
 
 

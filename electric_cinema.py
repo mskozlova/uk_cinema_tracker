@@ -125,6 +125,6 @@ def get_all_showings(**args):
         else:
             link = None
         logger.info(f"Processing showing {id_} of {film_id} in {venue_id} at {start_time}")
-        all_showings.append(structs.ShowingNew(id_, film_id, venue_id, start_time, 'Electric Cinema', link, available))
+        all_showings.append(structs.Showing(id_, film_id, venue_id, start_time, 'Electric Cinema', link, available))
     logger.info(f"Got {len(all_showings)} showings from Electric Cinema")
     return all_showings

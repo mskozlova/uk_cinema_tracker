@@ -22,9 +22,9 @@ class MovieDiff:
 
 @dataclasses.dataclass
 class ShowingDiff:
-    deleted: List[structs.ShowingNew]
-    changed: List[Tuple[structs.ShowingNew, structs.ShowingNew]]
-    added: List[structs.ShowingNew]
+    deleted: List[structs.Showing]
+    changed: List[Tuple[structs.Showing, structs.Showing]]
+    added: List[structs.Showing]
 
 def get_all_revisions(con: sqlite3.Connection) -> List[int]:
     return model.get_all_revisions(con)
@@ -91,8 +91,8 @@ def _get_movie_diff(movies1: List[structs.Movie], movies2: List[structs.Movie], 
     
     return MovieDiff(deleted, changed, added)
 
-def _get_showing_diff(showings1: List[structs.ShowingNew], showings2: List[structs.ShowingNew], logger: logging.Logger) -> ShowingDiff:
-    def get_id(showing: structs.ShowingNew):
+def _get_showing_diff(showings1: List[structs.Showing], showings2: List[structs.Showing], logger: logging.Logger) -> ShowingDiff:
+    def get_id(showing: structs.Showing):
         if showing.id_:
             return (showing.network_name, showing.id_, showing.venue_id, showing.movie_id)
         return (showing.network_name, showing.venue_id, showing.movie_id, showing.start_time_local)

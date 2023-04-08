@@ -6,7 +6,7 @@ from typing import List
 from typing import Optional
 
 
-def save_showings(con: sqlite3.Connection, showings: List[structs.ShowingNew], revision: int):
+def save_showings(con: sqlite3.Connection, showings: List[structs.Showing], revision: int):
     data = [(s.id_.strip(), s.movie_id.strip(), s.venue_id.strip(), s.start_time_local.isoformat(), s.network_name, s.link, s.available, revision) for s in showings]
     con.executemany('INSERT INTO showings(id, movie_id, venue_id, start_time_local, network_name, link, available, revision) '
                     'VALUES(?, ?, ?, ?, ?, ?, ?, ?)',
@@ -42,12 +42,12 @@ def get_movies(con: sqlite3.Connection, revision: int) -> List[structs.Movie]:
     res = con.execute("select id, title, network_name, link, available from movies where revision = ?", (revision,))
     return [structs.Movie(x[0], x[1], x[2], x[3], x[4]) for x in res.fetchall()]
 
-def get_showings(con: sqlite3.Connection, revision: int) -> List[structs.ShowingNew]:
+def get_showings(con: sqlite3.Connection, revision: int) -> List[structs.Showing]:
     res = con.execute("select id, movie_id, venue_id, start_time_local, network_name, link, available from showings where revision = ?", (revision,))
-    return [structs.ShowingNew(x[0], x[1], x[2], x[3], x[4], x[5], x[6]) for x in res.fetchall()]
+    return [structs.Showing(x[0], x[1], x[2], x[3], x[4], x[5], x[6]) for x in res.fetchall()]
 
-def search_showings(con: sqlite3.Connection, revision: int, search_query: Optional[str]) -> List[structs.ShowingNew]:
+def search_showings(con: sqlite3.Connection, revision: int, search_query: Optional[str]) -> List[structs.Showing]:
     if not search_query:
         return get_showings(con, revision)
     res = con.execute("select id, movie_id, venue_id, start_time_local, s.network_name, s.link, s.available from showings as s left join movies as m on s.network_name = m.network_name and s.movie_id = m.id where s.revision = ? and m.revision = ? and lower(m.title) like ?", (revision, revision, '%'+search_query+'%'))
-    return [structs.ShowingNew(x[0], x[1], x[2], datetime.datetime.fromisoformat(x[3]), x[4], x[5], x[6]) for x in res.fetchall()]
+    return [structs.Showing(x[0], x[1], x[2], datetime.datetime.fromisoformat(x[3]), x[4], x[5], x[6]) for x in res.fetchall()]
