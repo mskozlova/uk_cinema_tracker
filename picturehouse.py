@@ -6,6 +6,8 @@ import structs
 import logging
 import re
 
+from typing import List
+
 
 formatter = logging.Formatter('%(asctime)s, %(name)s %(levelname)s %(message)s')
 handler = logging.FileHandler('picturehouse.log')
@@ -40,7 +42,7 @@ def get_token():
     token = [x for x in r.text.split('\n') if '_token: "' in x][0].strip().split('"')[1]
     return cookie, token
 
-def get_all_venues(**kwargs):
+def get_all_venues(**kwargs) -> List[structs.Venue]:
     cookie, token = get_token()
     url = 'https://www.picturehouses.com/ajax-cinema-list'
     headers = {
@@ -114,7 +116,7 @@ def get_venues():
         venues.append((venue_id, normalized_name))
     return venues
 
-def get_all_movies(**kwargs):
+def get_all_movies(**kwargs) -> List[structs.Movie]:
     url = 'https://www.picturehouses.com/api/scheduled-movies-ajax'
     headers = {
   'authority': 'www.picturehouses.com',
@@ -149,43 +151,8 @@ def get_all_movies(**kwargs):
     logger.info(f"Got {len(movies)} movies from Picturehouse")
     return movies
 
-def get_all_showings_old(**kwargs):
-    venues = get_venues()
-    venue_name_by_id = {id_: name for (id_, name) in venues}
-    url = 'https://www.picturehouses.com/api/scheduled-movies-ajax'
-    headers = {
-  'authority': 'www.picturehouses.com',
-  'accept': '*/*',
-  'accept-language': 'ru,en;q=0.9',
-  'content-type': 'application/x-www-form-urlencoded; charset=UTF-8',
-  'origin': 'https://www.picturehouses.com',
-  'referer': 'https://www.picturehouses.com/whats-on',
-  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
-  'sec-ch-ua-mobile': '?1',
-  'sec-ch-ua-platform': '"Android"',
-  'sec-fetch-dest': 'empty',
-  'sec-fetch-mode': 'cors',
-  'sec-fetch-site': 'same-origin',
-  'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
-  'x-requested-with': 'XMLHttpRequest',
-    }
-    r = requests.post(url, data='cinema_id=', headers=headers)
-    js = r.json()
-    all_showings = []
-    for item in js['movies']:
-        title = item['Title']
-        logger.info(f"Processing showings of {title}")
-        for showtime in item['show_times']:
-            venue_id = showtime['CinemaId']
-            venue_name = venue_name_by_id.get(venue_id)
-            if not venue_name:
-                logger.warning(f"Cannot find venue with id={venue_id}. Skipping...")
-                continue
-            start_time = datetime.datetime.fromisoformat(showtime['Showtime'])
-            all_showings.append(structs.Showing(title, venue_name, start_time, 'Picturehouse'))
-    return all_showings
     
-def get_all_showings(**kwargs):
+def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
     venues = get_venues()
     venue_name_by_id = {id_: name for (id_, name) in venues}
     url = 'https://www.picturehouses.com/api/scheduled-movies-ajax'

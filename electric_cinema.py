@@ -95,51 +95,6 @@ def get_all_movies(**args):
     return movies
 
 
-def get_all_showings_old(**args):
-    url = 'https://www.electriccinema.co.uk/data/0000000000000.json'
-    headers = {
-    'authority': 'www.electriccinema.co.uk',
-    'accept': '*/*',
-    'accept-language': 'ru,en;q=0.9',
-    'referer': 'https://www.electriccinema.co.uk/programme/by-film/',
-    'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
-    'sec-ch-ua-mobile': '?1',
-    'sec-ch-ua-platform': '"Android"',
-    'sec-fetch-dest': 'empty',
-    'sec-fetch-mode': 'cors',
-    'sec-fetch-site': 'same-origin',
-    'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
-    }
-    r = requests.get(url, headers=headers)
-    js = r.json()
-    venues_name_by_id = {}
-    for item in js['cinemas'].values():
-        id_ = item['id']
-        name = item['title']
-        venues_name_by_id[id_] = name
-    film_names_by_id = {}
-    for id_, item in js['films'].items():
-        title = item['title']
-        film_names_by_id[id_] = title
-        logger.info(f"Processing movie id={id_} title={title}")
-    all_showings = []
-    for item in js['screenings'].values():
-        film_id = str(item['film'])
-        film_name = film_names_by_id.get(film_id)
-        if not film_name:
-            logger.warning(f"Cannot find movie with id={film_id}. Skipping...")
-            continue
-        venue_id = item['cinema']
-        venue_name = venues_name_by_id.get(venue_id)
-        if not venue_name:
-            logger.warning(f'Cannot find venue with id={venue_id}. Skipping...')
-            continue
-        start_time = datetime.datetime.fromisoformat(item['d'] + "T" + item['t'])
-        logger.info(f"Processing showing of {film_name} in {venue_name} at {start_time}")
-        all_showings.append(structs.Showing(film_name, venue_name, start_time, 'Electric Cinema'))
-    return all_showings
-
-
 def get_all_showings(**args):
     url = 'https://www.electriccinema.co.uk/data/0000000000000.json'
     headers = {

@@ -128,48 +128,6 @@ def get_all_movies(**args):
     return all_movies
 
 
-def get_imax_showings_old():
-    url = 'https://whatson.bfi.org.uk/imax/Online/default.asp'
-    headers = {
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-  'Accept-Language': 'ru,en;q=0.9',
-  'Cache-Control': 'max-age=0',
-  'Connection': 'keep-alive',
-  'Content-Type': 'application/x-www-form-urlencoded',
-  'Origin': 'https://whatson.bfi.org.uk',
-  'Referer': 'https://whatson.bfi.org.uk/imax/Online/default.asp',
-  'Sec-Fetch-Dest': 'document',
-  'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'same-origin',
-  'Sec-Fetch-User': '?1',
-  'Upgrade-Insecure-Requests': '1',
-  'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
-  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
-  'sec-ch-ua-mobile': '?1',
-  'sec-ch-ua-platform': '"Android"',
-    }
-    r = requests.post(url, data='BOparam%3A%3AWScontent%3A%3Asearch%3A%3Aarticle_search_id=49C49C83-6BA0-420C-A784-9B485E36E2E0&doWork%3A%3AWScontent%3A%3Asearch=1', headers=headers)
-    inside = False
-    logger.info(f"HTML: {r.text}")
-
-    showings = []
-
-    for line in r.text.split('\n'):
-        if 'searchResults :' in line:
-            inside = True
-            continue
-        if inside:
-            if line == '  ],':
-                break
-            logger.info(f"Parsing {line}")
-            parts = ast.literal_eval(line.strip().rstrip(','))
-            title = parts[5]
-            venue_name = parts[63]
-            start_time = datetime.datetime.fromisoformat(f"{parts[11]}-{int(parts[10])+1:02}-{int(parts[9]):02}T{parts[8]}:00")
-            logger.info(f"Processing {title} in {venue_name} at {start_time}")
-            showings.append(structs.Showing(title, venue_name, start_time, 'BFI'))
-    logger.info(f"Got {len(showings)} IMAX showings in BFI")
-    return showings
 
 def get_imax_showings():
     url = 'https://whatson.bfi.org.uk/imax/Online/default.asp'
@@ -222,47 +180,6 @@ def get_imax_showings():
     logger.info(f"Got {len(showings)} IMAX showings in BFI")
     return showings
 
-def get_regular_showings_old():
-    url = 'https://whatson.bfi.org.uk/Online/default.asp'
-    headers = {
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-  'Accept-Language': 'ru,en;q=0.9',
-  'Cache-Control': 'max-age=0',
-  'Connection': 'keep-alive',
-  'Content-Type': 'application/x-www-form-urlencoded',
-  'Origin': 'https://whatson.bfi.org.uk',
-  'Referer': 'https://whatson.bfi.org.uk/Online/default.asp',
-  'Sec-Fetch-Dest': 'document',
-  'Sec-Fetch-Mode': 'navigate',
-  'Sec-Fetch-Site': 'same-origin',
-  'Sec-Fetch-User': '?1',
-  'Upgrade-Insecure-Requests': '1',
-  'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
-  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
-  'sec-ch-ua-mobile': '?1',
-  'sec-ch-ua-platform': '"Android"',
-    }
-    r = requests.post(url, data='BOparam%3A%3AWScontent%3A%3Asearch%3A%3Aarticle_search_id=25E7EA2E-291F-44F9-8EBC-E560154FDAEB&doWork%3A%3AWScontent%3A%3Asearch=1', headers=headers)
-    inside = False
-    logger.info(f"HTML: {r.text}")
-
-    showings = []
-
-    for line in r.text.split('\n'):
-        if 'searchResults :' in line:
-            inside = True
-            continue
-        if inside:
-            if line == '  ],':
-                break
-            logger.info(f"Parsing {line}")
-            title = parts[5]
-            venue_name = 'BFI Southbank'
-            start_time = datetime.datetime.fromisoformat(f"{parts[11]}-{int(parts[10])+1:02}-{int(parts[9]):02}T{parts[8]}:00")
-            logger.info(f"Processing {title} in {venue_name} at {start_time}")
-            showings.append(structs.Showing(title, venue_name, start_time, 'BFI'))
-    logger.info(f"Got {len(showings)} regular showings in BFI")
-    return showings
 
 def get_regular_showings():
     url = 'https://whatson.bfi.org.uk/Online/default.asp'
@@ -316,9 +233,6 @@ def get_regular_showings():
     logger.info(f"Got {len(showings)} regular showings in BFI")
     return showings
 
-
-def get_all_showings_old(**args):
-    return get_imax_showings_old() + get_regular_showings_old()
 
 def get_all_showings(**args):
     return get_imax_showings() + get_regular_showings()

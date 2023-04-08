@@ -105,7 +105,7 @@ def get_venue_ids():
             venues.append((id_, name))
     return venues
 
-def get_all_movies(**kwargs):
+def get_all_movies(**kwargs) -> List[structs.Movie]:
     url = 'https://www.myvue.com/data/filmswithshowings/'
     headers = {
   'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
@@ -158,51 +158,6 @@ def get_movie_ids():
         movies.append((id_, title))
     return movies
     
-def get_movie_showings_old(movie_id, venue_id):
-    url = f'https://www.myvue.com/data/showings/{movie_id}/{venue_id}'
-    headers = {
-  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
-  'Referer': 'https://www.myvue.com/film/insidious-the-red-door/times',
-  'X-Requested-With': 'XMLHttpRequest',
-  'sec-ch-ua-mobile': '?1',
-  'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
-  'sec-ch-ua-platform': '"Android"',
-    }
-    r = requests.get(url, headers=headers)
-    js = r.json()
-    showings = []
-    for item in js['showings']:
-        date = item['date_time']
-        for time_item in item['times']:
-            time = time_item['time']
-            showings.append((date, time))
-    return showings
-
-def get_movie_showings_old(movie_id, venue_id):
-    url = f'https://www.myvue.com/data/showings/{movie_id}/{venue_id}'
-    headers = {
-  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
-  'Referer': 'https://www.myvue.com/film/insidious-the-red-door/times',
-  'X-Requested-With': 'XMLHttpRequest',
-  'sec-ch-ua-mobile': '?1',
-  'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
-  'sec-ch-ua-platform': '"Android"',
-    }
-    r = requests.get(url, headers=headers)
-    js = r.json()
-    showings = []
-    for item in js['showings']:
-        date = item['date_time']
-        for time_item in item['times']:
-            time = time_item['time']
-            screen_name = time_item['screen_name']
-            screen_type = time_item['screen_type']
-            # time_item['hidden'] or time_item['disabled']
-            price = time_item['default_price']
-            id_ = time_item['session_id']
-            link = f'https://www.myvue.com/book-tickets/summary/{venue_id}/{movie_id}/{id_}'
-            showings.append(structs.ShowingNew(id_, movie_id, venue_id, build_datetime(date, time), 'VUE', link, True))
-    return showings
 
 def get_movie_showings(movie_id, venue_id):
     url = f'https://www.myvue.com/data/showings/{movie_id}/{venue_id}'
@@ -238,26 +193,6 @@ def build_showing(movie_name, venue_name, showing_date, showing_time):
     start_time_local = build_datetime(showing_date, showing_time)
     return structs.Showing(movie_name, venue_name, start_time_local, 'VUE')
 
-def get_all_showings_old(**kwargs) -> List[structs.Showing]:
-    movies = get_movie_ids()
-    venues = get_venue_ids()
-
-    all_showings = []
-
-    for venue_id, venue_name in venues:
-        logger.info(f"Processing {venue_name}")
-        ###########
-        if 'London' not in venue_name:
-            continue
-        ###########
-        for movie_id, movie_name in movies:
-            showings = get_movie_showings_old(movie_id, venue_id)
-            time.sleep(0.1)
-            if not showings: continue
-            logger.info(f"Processing {movie_name} in {venue_name}: {str(showings)[:160]}")
-            for showing_date, showing_time in showings:
-                all_showings.append(build_showing(movie_name, venue_name, showing_date, showing_time))
-    return all_showings
 
 def get_all_showings(**kwargs) -> List[structs.ShowingNew]:
     movies = get_movie_ids()

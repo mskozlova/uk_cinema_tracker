@@ -5,13 +5,6 @@ import datetime
 from typing import List
 from typing import Optional
 
-def save_showings_old(con: sqlite3.Connection, showings: List[structs.Showing], revision: int):
-    data = [(s.movie_title.strip(), s.venue_name.strip(), s.start_time_local.isoformat(), s.network_name, revision) for s in showings]
-    con.executemany('INSERT INTO showings_old(movie_title, venue_name, start_time_local, network_name, revision) '
-                    'VALUES(?, ?, ?, ?, ?)',
-                    data)
-    con.commit()
-    print(f'Saved {len(showings)} showings')
 
 def save_showings(con: sqlite3.Connection, showings: List[structs.ShowingNew], revision: int):
     data = [(s.id_.strip(), s.movie_id.strip(), s.venue_id.strip(), s.start_time_local.isoformat(), s.network_name, s.link, s.available, revision) for s in showings]

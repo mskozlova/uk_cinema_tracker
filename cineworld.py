@@ -141,43 +141,6 @@ def get_all_movies(revision):
     logger.info(f"Got {len(movies)} movies from Cineworld")
     return movies
 
-def get_showings_old(venue_id, date, revision):
-    js = get_film_events_json(venue_id, date, revision)
-    name_by_id = {}
-    for item in js['body']['films']:
-        id_ = item['id']
-        name = item['name']
-        name_by_id[id_] = name
-
-    showings = []
-    for item in js['body']['events']:
-        movie_id = item['filmId']
-        movie_name = name_by_id.get(movie_id)
-        if not movie_id:
-            logger.warning(f"Cannot file movie name for id={movie_id}. Skipping...")
-            continue
-        start_time = item['eventDateTime']
-        showings.append((movie_name, start_time))
-    return showings
-
-
-def get_all_showings_old(revision, **args):
-    assert(revision is not None)
-    venues = get_venues()
-    all_showings = []
-    for venue_id, venue_name in venues:
-        logger.info(f"Processing {venue_name}")
-        # if 'London' not in venue_name:
-            # continue
-        dates = get_venue_dates(venue_id, revision)
-        for date in dates:
-            logger.info(f"Processing showings on {date} at {venue_name}")
-            showings = get_showings(venue_id, date, revision)
-            time.sleep(0.1)
-            for movie_name, start_time in showings:
-                start_time_local = datetime.datetime.fromisoformat(start_time)
-                all_showings.append(structs.Showing(movie_name, venue_name, start_time_local, 'Cineworld'))
-    return all_showings
 
 def get_showings(venue_id, date, revision) -> List[structs.ShowingNew]:
     js = get_film_events_json(venue_id, date, revision)
