@@ -1,10 +1,9 @@
-import requests
 import structs
 import datetime
 import logging
-import time
 import json
 import collections
+import httplib
 
 from typing import List
 from typing import Set
@@ -18,7 +17,7 @@ logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
 
-def get_all_movies(**kwargs) -> List[structs.Movie]:
+def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
     url = 'https://cms-assets.webediamovies.pro/prod/everyman/64d73c13bc78e7607dd0f957/public/page-data/sq/d/4272676115.json'
     headers = {
   'authority': 'cms-assets.webediamovies.pro',
@@ -33,9 +32,7 @@ def get_all_movies(**kwargs) -> List[structs.Movie]:
   'sec-fetch-site': 'cross-site',
   'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
     }
-    r = requests.get(url, headers=headers)
-    time.sleep(0.1)
-    js = r.json()
+    js = httplib.get_json(revision, url, headers)
     movies = []
     for item in js['data']['allMovie']['nodes']:
         id_ = item['id']
@@ -52,7 +49,7 @@ def get_all_movies(**kwargs) -> List[structs.Movie]:
     logger.info(f"Got {len(movies)} movies from Everyman")
     return movies
 
-def get_movies_by_venue_id() -> Dict[str, Set[str]]:
+def get_movies_by_venue_id(revision: int) -> Dict[str, Set[str]]:
     url = 'https://cms-assets.webediamovies.pro/prod/everyman/64d73c13bc78e7607dd0f957/public/page-data/sq/d/4272676115.json'
     headers = {
   'authority': 'cms-assets.webediamovies.pro',
@@ -67,9 +64,7 @@ def get_movies_by_venue_id() -> Dict[str, Set[str]]:
   'sec-fetch-site': 'cross-site',
   'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
     }
-    r = requests.get(url, headers=headers)
-    time.sleep(0.1)
-    js = r.json()
+    js = httplib.get_json(revision, url, headers)
     movies_by_theatre = collections.defaultdict(set)
     for item in js['data']['allMovie']['nodes']:
         id_ = item['id']
@@ -79,7 +74,7 @@ def get_movies_by_venue_id() -> Dict[str, Set[str]]:
     return movies_by_theatre
 
 
-def get_all_venues(**kwargs) -> List[structs.Venue]:
+def get_all_venues(revision: int, **kwargs) -> List[structs.Venue]:
     url = 'https://cms-assets.webediamovies.pro/prod/everyman/64d73c13bc78e7607dd0f957/public/page-data/sq/d/2826555639.json'
     headers = {
   'authority': 'cms-assets.webediamovies.pro',
@@ -94,9 +89,7 @@ def get_all_venues(**kwargs) -> List[structs.Venue]:
   'sec-fetch-site': 'cross-site',
   'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
     }
-    r = requests.get(url, headers=headers)
-    time.sleep(0.1)
-    js = r.json()
+    js = httplib.get_json(revision, url, headers)
     venues = []
     for item in js['data']['allTheater']['nodes']:
         id_ = item['id']
@@ -113,7 +106,7 @@ def get_all_venues(**kwargs) -> List[structs.Venue]:
     return venues
 
 
-def get_all_showings(**kwargs) -> List[structs.Showing]:
+def get_all_showings(revision: int, **kwargs) -> List[structs.Showing]:
     url = 'https://www.everymancinema.com/api/gatsby-source-boxofficeapi/schedule'
     headers = {
   'authority': 'www.everymancinema.com',
@@ -130,10 +123,10 @@ def get_all_showings(**kwargs) -> List[structs.Showing]:
   'sec-fetch-site': 'same-origin',
   'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
     }
-    venues = get_all_venues(**kwargs)
+    venues = get_all_venues(revision, **kwargs)
     venue_name_by_id = {venue.id_: venue.name for venue in venues}
-    movies = get_all_movies(**kwargs)
-    movies_by_venue_id = get_movies_by_venue_id()
+    movies = get_all_movies(revision, **kwargs)
+    movies_by_venue_id = get_movies_by_venue_id(revision)
     movie_name_by_id = {movie.id_: movie.title for movie in movies}
     from_dt = (datetime.datetime.now().date() - datetime.timedelta(days=1)).isoformat() + "T03:00:00"
     to_dt = (datetime.datetime.now().date() + datetime.timedelta(days=365)).isoformat() + "T03:00:00"
@@ -148,9 +141,7 @@ def get_all_showings(**kwargs) -> List[structs.Showing]:
         }
         data_str = json.dumps(data, separators=(',', ':'))
         logger.info(f"Posting data: {data_str}")
-        r = requests.post(url, data=data_str, headers=headers)
-        time.sleep(0.1)
-        js = r.json()
+        js = httplib.post_with_json_response(revision, url, data_str, headers)
         all_showings = []
         for venue_id, item in js.items():
             venue_name = venue_name_by_id.get(venue_id)
