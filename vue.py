@@ -4,6 +4,7 @@ import datetime
 
 import structs
 import logging
+import httplib
 
 from typing import List
 
@@ -15,7 +16,7 @@ logger = logging.getLogger('vue')
 logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
-def get_venue_location(venue_link_name):
+def get_venue_location(revision, venue_link_name):
     url = f'https://www.myvue.com/cinema/{venue_link_name}/getting-here'
     headers = {
   'authority': 'www.myvue.com' ,
@@ -31,10 +32,9 @@ def get_venue_location(venue_link_name):
   'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36' ,
     }
     for _ in range(10):
-        r = requests.get(url, headers=headers)
-        time.sleep(0.1)
-        logger.info(f'Got get directions HTML for {venue_link_name}: {r.text}')
-        lines = [x for x in r.text.split('\n') if 'Get directions' in x and 'q=' in x]
+        text = httplib.get_text(revision, url, headers)
+        logger.info(f'Got get directions HTML for {venue_link_name}: {text}')
+        lines = [x for x in text.split('\n') if 'Get directions' in x and 'q=' in x]
         logger.info(f'Got lines with directions for {venue_link_name}: {lines}')
         if lines:
             line = lines[0]
@@ -43,7 +43,7 @@ def get_venue_location(venue_link_name):
         time.sleep(5.0)
     raise Exception(f'Cannot find directions to {venue_link_name} VUE cinema')
 
-def get_all_venues(**kwargs) -> List[structs.Venue]:
+def get_all_venues(revision: int, **kwargs) -> List[structs.Venue]:
     url = 'https://www.myvue.com/data/locations/'
     headers = {
   'authority': 'www.myvue.com' ,
@@ -59,9 +59,7 @@ def get_all_venues(**kwargs) -> List[structs.Venue]:
   'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36' ,
   'x-requested-with': 'XMLHttpRequest' ,
     }
-    r = requests.get(url, headers=headers)
-    time.sleep(0.1)
-    js = r.json()
+    js = httplib.get_json(revision, url, headers)
     all_venues = []
     for item in js['venues']:
         for cinema in item['cinemas']:
@@ -69,12 +67,12 @@ def get_all_venues(**kwargs) -> List[structs.Venue]:
             name = cinema['search_term']
             available = not cinema['hidden']
             link_name = cinema['link_name']
-            lat, lon = get_venue_location(link_name)
+            lat, lon = get_venue_location(revision, link_name)
             link = f'https://www.myvue.com/cinema/{link_name}/about'
             all_venues.append(structs.Venue(id_, name, 'VUE', lat, lon, link, available))
     return all_venues
 
-def get_venue_ids():
+def get_venue_ids(revision: int):
     url = 'https://www.myvue.com/data/locations/'
     headers = {
   'authority': 'www.myvue.com' ,
@@ -90,8 +88,7 @@ def get_venue_ids():
   'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36' ,
   'x-requested-with': 'XMLHttpRequest' ,
     }
-    r = requests.get(url, headers=headers)
-    js = r.json()
+    js = httplib.get_json(revision, url, headers)
     ids = set()
     names = {}
     venues = []
@@ -99,13 +96,12 @@ def get_venue_ids():
         for cinema in item['cinemas']:
             id_ = cinema['id']
             name = cinema['search_term']
-            #print(name, id_)
             ids.add(id_)
             names[id_] = name
             venues.append((id_, name))
     return venues
 
-def get_all_movies(**kwargs) -> List[structs.Movie]:
+def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
     url = 'https://www.myvue.com/data/filmswithshowings/'
     headers = {
   'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
@@ -115,8 +111,7 @@ def get_all_movies(**kwargs) -> List[structs.Movie]:
   'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
   'sec-ch-ua-platform': '"Android"',
     }
-    r = requests.get(url, headers=headers)
-    js = r.json()
+    js = httplib.get_json(revision, url, headers)
     movies = []
     for item in js['films']:
         del item['showings']
@@ -135,7 +130,7 @@ def get_all_movies(**kwargs) -> List[structs.Movie]:
     logger.info(f"Got {len(movies)} from VUE")
     return movies
 
-def get_movie_ids():
+def get_movie_ids(revision: int):
     url = 'https://www.myvue.com/data/filmswithshowings/'
     headers = {
   'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
@@ -145,8 +140,7 @@ def get_movie_ids():
   'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
   'sec-ch-ua-platform': '"Android"',
     }
-    r = requests.get(url, headers=headers)
-    js = r.json()
+    js = httplib.get_json(revision, url, headers)
     ids = set()
     titles = {}
     movies = []
@@ -159,7 +153,7 @@ def get_movie_ids():
     return movies
     
 
-def get_movie_showings(movie_id, venue_id):
+def get_movie_showings(revision: int, movie_id, venue_id):
     url = f'https://www.myvue.com/data/showings/{movie_id}/{venue_id}'
     headers = {
   'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
@@ -169,9 +163,7 @@ def get_movie_showings(movie_id, venue_id):
   'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
   'sec-ch-ua-platform': '"Android"',
     }
-    r = requests.get(url, headers=headers)
-    time.sleep(0.1)
-    js = r.json()
+    js = httplib.get_json(revision, url, headers)
     showings = []
     for item in js['showings']:
         date = item['date_time']
@@ -189,9 +181,9 @@ def get_movie_showings(movie_id, venue_id):
 def build_datetime(date, time):
     return datetime.datetime.strptime(f'{date} {time}', '%Y-%m-%d %I:%M %p')
 
-def get_all_showings(**kwargs) -> List[structs.Showing]:
-    movies = get_movie_ids()
-    venues = get_venue_ids()
+def get_all_showings(revision: int, **kwargs) -> List[structs.Showing]:
+    movies = get_movie_ids(revision)
+    venues = get_venue_ids(revision)
 
     all_showings = []
 
@@ -202,6 +194,6 @@ def get_all_showings(**kwargs) -> List[structs.Showing]:
         #     continue
         ###########
         for movie_id, movie_name in movies:
-            showings = get_movie_showings(movie_id, venue_id)
+            showings = get_movie_showings(revision, movie_id, venue_id)
             all_showings.extend(showings)
     return all_showings
