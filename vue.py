@@ -32,7 +32,8 @@ def get_venue_location(revision, venue_link_name):
   'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36' ,
     }
     for _ in range(10):
-        text = httplib.get_text(revision, url, headers)
+        fake_revision = revision + _ # To avoid caching
+        text = httplib.get_text(fake_revision, url, headers)
         logger.info(f'Got get directions HTML for {venue_link_name}: {text}')
         lines = [x for x in text.split('\n') if 'Get directions' in x and 'q=' in x]
         logger.info(f'Got lines with directions for {venue_link_name}: {lines}')
