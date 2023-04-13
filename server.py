@@ -9,8 +9,18 @@ from urllib.parse import parse_qs
 
 import compare
 import logging
+import model
 
 import html_generators
+
+from vendor import jinja2
+from vendor.jinja2 import Environment, PackageLoader, select_autoescape
+env = Environment(
+    loader=PackageLoader("server"),
+    autoescape=select_autoescape(),
+    undefined=jinja2.StrictUndefined,
+)
+
 
 logger = logging.getLogger()
 
@@ -63,7 +73,18 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
             return
         
         if self.path.startswith('/venues'):
-            text = html_generators.generate_venues_page(self.path, logger)
+            template = env.get_template("venues.html")
+            #print(template.render(the="variables", go="here"))
+            #text = html_generators.generate_venues_page(self.path, logger)
+            with sqlite3.connect('movies.db') as con:
+                all_revisions = model.get_all_revisions(con)
+                rev = all_revisions[-1] if all_revisions else 1
+                venues = model.get_venues(con, rev)
+            import dataclasses
+            venues_dicts = [dataclasses.asdict(venue) for venue in venues if venue.available]
+            for venue in venues:
+                print(venue.network_name, venue.name, venue.lat, venue.lon)
+            text = template.render(the="variables", go="here", venues = venues_dicts)
             self.send_response(HTTPStatus.ACCEPTED)
             self.send_text(text, "text/html")
             return
