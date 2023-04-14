@@ -10,6 +10,15 @@
  */
 #map {
   height: 100%;
+  width: 50%;
+  margin-left: 50%;
+}
+
+#left-panel {
+    float: left;
+    overflow-y: scroll;
+    height: 100%;
+    width: 50%;
 }
 
 /*
@@ -24,8 +33,9 @@ body {
         </style>
     </head>
     <body>
-        <h3>My Google Maps Demo</h3>
         <!--The div element for the map -->
+        <div id="left-panel">
+        </div>
         <div id="map"></div>
     
         <!-- prettier-ignore -->
@@ -73,17 +83,38 @@ async function initMap() {
   const { Map } = await google.maps.importLibrary("maps");
   const { AdvancedMarkerView } = await google.maps.importLibrary("marker");
 
-  // The map, centered at Uluru
+  const venues = await (await fetch('/venues.json')).json();
   map = new Map(document.getElementById("map"), {
     zoom: 6,
     center: position,
     mapId: "DEMO_MAP_ID",
   });
 
+  google.maps.event.addListener(map, 'idle', function() {
+    const left_panel = document.getElementById('left-panel');
+    left_panel.innerHTML = '';
+    for (const venue of venues) {
+        if (!venue.available) {
+            continue;
+        }
+        const bounds = map.getBounds();
+        const position = {lat: venue.lat, lng: venue.lon};
+        if (bounds.contains(position)) {
+            const title = venue.network_name + " - " + venue.name;
+            const p = document.createElement('p');
+            const a = document.createElement('a');
+            a.href = venue.link;
+            a.innerText = title;
+            p.appendChild(a);
+            left_panel.appendChild(p);
+        }
+    }
+  });
+
   var markers = [];
   var icons = [];
-  {% for venue in venues %}
-    var icon_url = get_icon_url("{{ venue.network_name }}");
+  for (const venue of venues) {
+    const icon_url = get_icon_url(venue.network_name);
     var icon = null;
     if (icon_url != null) {
         icons.push(document.createElement("img"));
@@ -93,11 +124,11 @@ async function initMap() {
     }
     markers.push(new AdvancedMarkerView({
         map: map,
-        position: { lat: {{ venue.lat }}, lng: {{ venue.lon }}},
-        title: "{{ venue.network_name }} - {{ venue.name }}",
+        position: { lat: venue.lat, lng: venue.lon },
+        title: `${ venue.network_name } - ${ venue.name }`,
         content: icon,
     }));
-  {% endfor %}
+  }
 }
 
 initMap();

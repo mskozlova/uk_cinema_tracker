@@ -71,6 +71,18 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
             self.send_response(HTTPStatus.ACCEPTED)
             self.send_text(text, "text/html")
             return
+
+        if self.path.startswith('/venues.json'):
+            with sqlite3.connect('movies.db') as con:
+                all_revisions = model.get_all_revisions(con)
+                rev = all_revisions[-1] if all_revisions else 1
+                venues = model.get_venues(con, rev)
+            import dataclasses
+            venues_dicts = [dataclasses.asdict(venue) for venue in venues if venue.available]
+            text = json.dumps(venues_dicts)
+            self.send_response(HTTPStatus.OK)
+            self.send_text(text, "application/json")
+            return
         
         if self.path.startswith('/venues'):
             template = env.get_template("venues.html")
