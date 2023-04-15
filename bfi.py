@@ -175,8 +175,14 @@ def get_imax_showings():
             available = int(parts[16]) > 0
             price = parts[80] # min
             price = parts[81] # max
+            link_info = parts[18]
+            if not link_info:
+                logger.warning(f"Cannot find link info in line: {line}. Skipping...")
+                continue
+            movie_id = link_info.split('BOparam::WScontent::loadArticle::article_id=')[1].split('&')[0]
             logger.info(f"Processing {title} in {venue_name} at {start_time}")
-            showings.append(structs.Showing(id_, title, venue_name, start_time, 'BFI', link, available))
+            showings.append(structs.Showing(id_, movie_id, venue_name, start_time, 'BFI', link, available))
+
     logger.info(f"Got {len(showings)} IMAX showings in BFI")
     return showings
 
@@ -228,8 +234,13 @@ def get_regular_showings():
             available = int(parts[16]) > 0
             price = parts[80] # min
             price = parts[81] # max
+            link_info = parts[18]
+            if not link_info:
+                logger.warning(f"Cannot find link info in line: {line}. Skipping...")
+                continue
+            movie_id = link_info.split('BOparam::WScontent::loadArticle::article_id=')[1].split('&')[0]
             logger.info(f"Processing {title} in {venue_name} at {start_time}")
-            showings.append(structs.Showing(id_, title, venue_name, start_time, 'BFI', link, available))
+            showings.append(structs.Showing(id_, movie_id, venue_name, start_time, 'BFI', link, available))
     logger.info(f"Got {len(showings)} regular showings in BFI")
     return showings
 
