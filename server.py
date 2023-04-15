@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import dataclasses
 
 from http import HTTPStatus
 from http.server import HTTPServer
@@ -77,13 +78,34 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
                 all_revisions = model.get_all_revisions(con)
                 rev = all_revisions[-1] if all_revisions else 1
                 venues = model.get_venues(con, rev)
-            import dataclasses
             venues_dicts = [dataclasses.asdict(venue) for venue in venues if venue.available]
             text = json.dumps(venues_dicts)
             self.send_response(HTTPStatus.OK)
             self.send_text(text, "application/json")
             return
+
+        if self.path.startswith('/movies.json'):
+            with sqlite3.connect('movies.db') as con:
+                all_revisions = model.get_all_revisions(con)
+                rev = all_revisions[-1] if all_revisions else 1
+                movies = model.get_movies(con, rev)
+            movies_dicts = [dataclasses.asdict(movie) for movie in movies if movie.available]
+            text = json.dumps(movies_dicts)
+            self.send_response(HTTPStatus.OK)
+            self.send_text(text, "application/json")
+            return
         
+        if self.path.startswith('/showings.json'):
+            with sqlite3.connect('movies.db') as con:
+                all_revisions = model.get_all_revisions(con)
+                rev = all_revisions[-1] if all_revisions else 1
+                showings = model.get_showings(con, rev)
+            showings_dicts = [dataclasses.asdict(showing) for showing in showings if showing.available]
+            text = json.dumps(showings_dicts)
+            self.send_response(HTTPStatus.OK)
+            self.send_text(text, "application/json")
+            return
+
         if self.path.startswith('/venues'):
             template = env.get_template("venues.html")
             #print(template.render(the="variables", go="here"))
@@ -92,7 +114,6 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
                 all_revisions = model.get_all_revisions(con)
                 rev = all_revisions[-1] if all_revisions else 1
                 venues = model.get_venues(con, rev)
-            import dataclasses
             venues_dicts = [dataclasses.asdict(venue) for venue in venues if venue.available]
             for venue in venues:
                 print(venue.network_name, venue.name, venue.lat, venue.lon)
@@ -108,6 +129,18 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
             return
 
         if self.path.startswith('/showings'):
+            template = env.get_template("showings.html")
+            #print(template.render(the="variables", go="here"))
+            #text = html_generators.generate_venues_page(self.path, logger)
+            with sqlite3.connect('movies.db') as con:
+                all_revisions = model.get_all_revisions(con)
+                rev = all_revisions[-1] if all_revisions else 1
+                venues = model.get_venues(con, rev)
+            venues_dicts = [dataclasses.asdict(venue) for venue in venues if venue.available]
+            text = template.render()
+            self.send_response(HTTPStatus.ACCEPTED)
+            self.send_text(text, "text/html")
+            return
             text = html_generators.generate_search_showings_page(self.path, logger)
             self.send_response(HTTPStatus.ACCEPTED)
             self.send_text(text, "text/html")

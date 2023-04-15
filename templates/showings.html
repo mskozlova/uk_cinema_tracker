@@ -1,0 +1,196 @@
+<html>
+    <head>
+        <title>Venues</title>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    
+        <style>
+/*
+ * Always set the map height explicitly to define the size of the div element
+ * that contains the map.
+ */
+#map {
+  height: 100%;
+  width: 50%;
+  margin-left: 50%;
+}
+
+#left-panel {
+    float: left;
+    overflow-y: scroll;
+    height: 100%;
+    width: 50%;
+}
+
+/*
+ * Optional: Makes the sample page fill the window.
+ */
+html,
+body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+        </style>
+    </head>
+    <body>
+        <!--The div element for the map -->
+        <div id="left-panel">
+        <div id="filters">
+        <input id="filter_movie_name" type="text"/>
+        </div>
+        <div id="showings-list"></div>
+        </div>
+        <div id="map"></div>
+    
+        <!-- prettier-ignore -->
+        <script>(g=>{var h,a,k,p="The Google Maps JavaScript API",c="google",l="importLibrary",q="__ib__",m=document,b=window;b=b[c]||(b[c]={});var d=b.maps||(b.maps={}),r=new Set,e=new URLSearchParams,u=()=>h||(h=new Promise(async(f,n)=>{await (a=m.createElement("script"));e.set("libraries",[...r]+"");for(k in g)e.set(k.replace(/[A-Z]/g,t=>"_"+t[0].toLowerCase()),g[k]);e.set("callback",c+".maps."+q);a.src=`https://maps.${c}apis.com/maps/api/js?`+e;d[q]=f;a.onerror=()=>h=n(Error(p+" could not load."));a.nonce=m.querySelector("script[nonce]")?.nonce||"";m.head.append(a)}));d[l]?console.warn(p+" only loads once. Ignoring:",g):d[l]=(f,...n)=>r.add(f)&&u().then(()=>d[l](f,...n))})
+            // TODO: restrict
+            ({key: "AIzaSyAKtI3oQrz29NbD9oNTjx3oH-Y6kPmstsI", v: "beta"});</script>
+        <script type="text/javascript">
+// Initialize and add the map
+let map;
+
+function get_icon_url(network_name) {
+    if (network_name == 'VUE') {
+        return "https://www.myvue.com/assets/images/favicons/favicon-16x16.png";
+    }
+    if (network_name == 'Cineworld') {
+        return "https://cdn-ukwest.onetrust.com/logos/5922c8a7-c44a-4864-9773-804dd97f3b15/7c48a274-41fc-453d-b9bc-d85ef8a94818/7e230523-a961-4471-8d41-c62faa657010/CWicon.png";
+        //return "https://www.cineworld.co.uk/xmedia/img/10108/fav.png?";
+    }
+    if (network_name == 'ODEON') {
+        return "https://www.odeon.co.uk/images/favicon.png";
+    }
+    if (network_name == 'Everyman') {
+        return "https://cms-assets.webediamovies.pro/cdn-cgi/image/width=192,height=192,fit=contain,quality=100/production/2/d757bf555569b234393e995da3b1d4cb.png";
+    }
+    if (network_name == 'Curzon') {
+        return "https://www.curzon.com/frontend/build/img/favicon.png";
+    }
+    if (network_name == 'Picturehouse') {
+        return "https://www.picturehouses.com/themes/images/favicon-16x16.png";
+    }
+    if (network_name == 'Electric Cinema') {
+        return "https://www.electriccinema.co.uk/favicon-16x16.png";
+    }
+    if (network_name == "BFI") {
+        return "https://upload.wikimedia.org/wikipedia/en/5/5a/British_Film_Institute_logo.svg"
+    }
+    return null;
+}
+
+async function initMap() {
+  // The location of Uluru
+  const position = { lat: 54.0, lng: -5.0 };
+  // Request needed libraries.
+  //@ts-ignore
+  const { Map } = await google.maps.importLibrary("maps");
+  const { AdvancedMarkerView } = await google.maps.importLibrary("marker");
+
+  const venues = await (await fetch('/venues.json')).json();
+  const movies = await (await fetch('/movies.json')).json();
+  const showings = await (await fetch('/showings.json')).json();
+  var movies_by_id = {};
+  for (const movie of movies) {
+    const id = movie.id_;
+    movies_by_id[id] = movie;
+  }
+  var venues_by_id = {};
+  for (const venue of venues) {
+    const id = venue.id_;
+    venues_by_id[id] = venue;
+  }
+  map = new Map(document.getElementById("map"), {
+    zoom: 6,
+    center: position,
+    mapId: "DEMO_MAP_ID",
+  });
+
+  const onChange = function() {
+    const left_panel = document.getElementById('showings-list');
+    left_panel.innerHTML = '';
+    console.time('Loop over showings');
+    const bounds = map.getBounds();
+    const name_filter = document.getElementById("filter_movie_name").value;
+    var filtered_showings = [];
+    for (const showing of showings) {
+        if (!showing.available) {
+            continue;
+        }
+        if (new Date(showing.start_time_local) < new Date()) {
+            continue;
+        }
+        const venue = venues_by_id[showing.venue_id];
+        const movie = movies_by_id[showing.movie_id];
+        if (!movie) {
+            // TODO: remove when BFI movie ids is fixed
+            continue;
+        }
+        if (!venue.available || !movie.available) {
+            continue;
+        }
+        const position = {lat: venue.lat, lng: venue.lon};
+        if (!bounds.contains(position)) {
+            continue;
+        }
+        if (!movie.title.toLowerCase().includes(name_filter)) {
+            continue;
+        }
+        filtered_showings.push([showing, movie, venue]);
+    }
+    console.timeEnd('Loop over showings');
+    console.time('Sort');
+    filtered_showings.sort(function(a, b) { 
+        const x = a[0].start_time_local;
+        const y = b[0].start_time_local;
+        return (x > y) - (y > x);
+    });
+    console.timeEnd('Sort');
+    console.time('Adding html elements');
+    var added = 0;
+    for (const item of filtered_showings) {
+        const showing = item[0];
+        const movie = item[1];
+        const venue = item[2];
+        //const title = venue.network_name + " - " + venue.name + " - " + movie.title + " - " + showing.start_time_local;
+        const title = showing.start_time_local + " - " + movie.title + " - " + venue.network_name + " - " + venue.name;
+        const p = document.createElement('p');
+        const a = document.createElement('a');
+        a.href = showing.link;
+        a.innerText = title;
+        p.appendChild(a);
+        left_panel.appendChild(p);
+        added += 1;
+        if (added >= 1000) {
+            break;
+        }
+    }
+    console.timeEnd('Adding html elements');
+  };
+  google.maps.event.addListener(map, 'idle', onChange);
+  document.getElementById('filter_movie_name').addEventListener("keyup", onChange);
+
+  var markers = [];
+  var icons = [];
+  for (const venue of venues) {
+    const icon_url = get_icon_url(venue.network_name);
+    var icon = null;
+    if (icon_url != null) {
+        icons.push(document.createElement("img"));
+        icon = icons[icons.length - 1];
+        icon.width = 20;
+        icon.src = icon_url;
+    }
+    markers.push(new AdvancedMarkerView({
+        map: map,
+        position: { lat: venue.lat, lng: venue.lon },
+        title: `${ venue.network_name } - ${ venue.name }`,
+        content: icon,
+    }));
+  }
+}
+
+initMap();
+        </script>
+    </body>
+</html>
