@@ -4,6 +4,7 @@ import structs
 import logging
 import ast
 import httplib
+import re
 
 
 formatter = logging.Formatter('%(asctime)s, %(name)s %(levelname)s %(message)s')
@@ -13,18 +14,6 @@ logger = logging.getLogger('bfi')
 logger.setLevel(logging.DEBUG)
 logger.addHandler(handler)
 
-SUBSITES = [
-    {
-        'sub_url': '',
-        'article_search_id': '25E7EA2E-291F-44F9-8EBC-E560154FDAEB',
-        'venue_id': "BFI Southbank",
-    },
-    {
-        'sub_url': 'imax/',
-        'article_search_id': '49C49C83-6BA0-420C-A784-9B485E36E2E0',
-        'venue_id': "BFI IMAX",
-    },
-]
 
 def get_all_venues(**kwargs):
     return [
@@ -73,8 +62,12 @@ def get_movies_from_subsite(revision: int, sub_url: str, venue_id: str, article_
             if not link_info:
                 logger.warning(f"Cannot find link info in line: {line}. Skipping...")
                 continue
-            movie_id = link_info.split('BOparam::WScontent::loadArticle::article_id=')[1].split('&')[0]
-            link = f'https://whatson.bfi.org.uk/{sub_url}Online/default.asp?doWork::WScontent::loadArticle=Load&BOparam::WScontent::loadArticle::article_id=' + movie_id
+            if 'default.asp?BOparam::WScontent::loadArticle::permalink=' in link_info:
+                movie_id = link_info.split('BOparam::WScontent::loadArticle::permalink=')[1].split('&')[0]
+                link = f'https://whatson.bfi.org.uk/{sub_url}Online/' + link_info
+            else:
+                movie_id = link_info.split('BOparam::WScontent::loadArticle::article_id=')[1].split('&')[0]
+                link = f'https://whatson.bfi.org.uk/{sub_url}Online/default.asp?doWork::WScontent::loadArticle=Load&BOparam::WScontent::loadArticle::article_id=' + movie_id
             movies_by_id[movie_id] = structs.Movie(movie_id, title, 'BFI', link, True)
     movies = list(movies_by_id.values())
     logger.info(f"Got {len(movies)} movies from BFI {sub_url} {venue_id}")
@@ -129,16 +122,89 @@ def get_showings_from_subsite(revision: int, sub_url: str, venue_id: str, articl
             if not link_info:
                 logger.warning(f"Cannot find link info in line: {line}. Skipping...")
                 continue
-            movie_id = link_info.split('BOparam::WScontent::loadArticle::article_id=')[1].split('&')[0]
+            if 'default.asp?BOparam::WScontent::loadArticle::permalink=' in link_info:
+                movie_id = link_info.split('BOparam::WScontent::loadArticle::permalink=')[1].split('&')[0]
+                link = f'https://whatson.bfi.org.uk/{sub_url}Online/' + link_info
+            else:
+                movie_id = link_info.split('BOparam::WScontent::loadArticle::article_id=')[1].split('&')[0]
             logger.info(f"Processing {title} in {venue_id} at {start_time}")
             showings.append(structs.Showing(id_, movie_id, venue_id, start_time, 'BFI', link, available))
 
     logger.info(f"Got {len(showings)} showings in BFI {sub_url} {venue_id}")
     return showings
 
+def get_article_search_id(revision: int, url: str):
+    headers = {
+  'authority': 'www.bfi.org.uk',
+  'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'accept-language': 'ru,en;q=0.9',
+  'cache-control': 'max-age=0',
+  'referer': 'https://whatson.bfi.org.uk/',
+  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
+  'sec-ch-ua-mobile': '?1',
+  'sec-ch-ua-platform': '"Android"',
+  'sec-fetch-dest': 'document',
+  'sec-fetch-mode': 'navigate',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-user': '?1',
+  'upgrade-insecure-requests': '1',
+  'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+    }
+    text = httplib.get_text(revision, url, headers)
+    for line in text.split('\n'):
+        line = line.strip()
+        if '<input type="hidden" name="BOparam::WScontent::search::article_search_id" value="' not in line:
+            continue
+        return line.split('value="')[1].split('"')[0]
+    logger.error(f"Cannot find article_search_id for {url}: {text}")
+    return None
+
+
+def get_subsites(revision: int):
+    urls_to_check = [
+        'https://www.bfi.org.uk',
+        'https://www.bfi.org.uk/bfi-festivals'
+    ]
+    headers = {
+  'authority': 'www.bfi.org.uk',
+  'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'accept-language': 'ru,en;q=0.9',
+  'cache-control': 'max-age=0',
+  'referer': 'https://whatson.bfi.org.uk/',
+  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
+  'sec-ch-ua-mobile': '?1',
+  'sec-ch-ua-platform': '"Android"',
+  'sec-fetch-dest': 'document',
+  'sec-fetch-mode': 'navigate',
+  'sec-fetch-site': 'same-site',
+  'sec-fetch-user': '?1',
+  'upgrade-insecure-requests': '1',
+  'user-agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+    }
+    subsites = []
+    for url in urls_to_check:
+        text = httplib.get_text(revision, url, headers)
+        matches = re.findall('(https://whatson.bfi.org.uk/\\S+/default.asp)', text)
+        subsites.extend(matches)
+    result = []
+    for url in sorted(set(subsites)):
+        article_search_id = get_article_search_id(revision, url)
+        if not article_search_id:
+            logger.error(f"Skipping {url} because of missing article_search_id")
+            continue
+        sub_url = url.split('https://whatson.bfi.org.uk/', 1)[1].rsplit('Online/default.asp', 1)[0]
+        result.append({
+            'sub_url': sub_url,
+            'article_search_id': article_search_id,
+            'venue_id': 'BFI IMAX' if 'imax' in sub_url else 'BFI Southbank',
+        })
+    return result
+
+
 def get_all_movies(revision: int, **kwargs) -> structs.Showing:
     all_movies = []
-    for subsite in SUBSITES:
+    subsites = get_subsites(revision)
+    for subsite in subsites:
         movies = get_movies_from_subsite(revision, subsite['sub_url'], subsite['venue_id'], subsite['article_search_id'])
         all_movies.extend(movies)
     logger.info(f"Got {len(all_movies)} movies from BFI")
@@ -147,7 +213,8 @@ def get_all_movies(revision: int, **kwargs) -> structs.Showing:
 
 def get_all_showings(revision: int, **kwargs) -> structs.Showing:
     all_showings = []
-    for subsite in SUBSITES:
+    subsites = get_subsites(revision)
+    for subsite in subsites:
         showings = get_showings_from_subsite(revision, subsite['sub_url'], subsite['venue_id'], subsite['article_search_id'])
         all_showings.extend(showings)
     logger.info(f"Got {len(all_showings)} showings from BFI")
