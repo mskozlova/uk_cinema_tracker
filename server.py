@@ -100,7 +100,7 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
                 all_revisions = model.get_all_revisions(con)
                 rev = all_revisions[-1] if all_revisions else 1
                 showings = model.get_showings(con, rev)
-            showings_dicts = [dataclasses.asdict(showing) for showing in showings if showing.available]
+            showings_dicts = [dataclasses.asdict(showing) for showing in showings]
             text = json.dumps(showings_dicts)
             self.send_response(HTTPStatus.OK)
             self.send_text(text, "application/json")
