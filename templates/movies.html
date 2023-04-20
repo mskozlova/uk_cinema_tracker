@@ -1,0 +1,59 @@
+<html>
+    <head>
+        <title>Movies</title>
+        <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+    </head>
+    <body>
+        <div id="movies-list"></div>
+    
+        <script type="text/javascript">
+
+
+async function initMovies() {
+  const venues = await (await fetch('/venues.json')).json();
+  const movies = await (await fetch('/movies.json')).json();
+  const showings = await (await fetch('/showings.json')).json();
+
+  var cnt_by_id = {};
+  for (const showing of showings) {
+    const movie_id = showing.movie_id;
+    if (movie_id in cnt_by_id) {
+        cnt_by_id[movie_id] += 1;
+    } else {
+        cnt_by_id[movie_id] = 1;
+    }
+  }
+
+  movies.sort(function(a,b) {
+    const id1 = a.id_;
+    const id2 = b.id_;
+    if (!(id1 in cnt_by_id) && !(id2 in cnt_by_id)) {
+        return 0;
+    }
+    if (!(id1 in cnt_by_id)) {
+        return 1;
+    }
+    if (!(id2 in cnt_by_id)) {
+        return -1;
+    }
+    const cnt1 = cnt_by_id[id1];
+    const cnt2 = cnt_by_id[id2];
+    return (cnt1 < cnt2) - (cnt2 < cnt1);
+  });
+
+  const list = document.getElementById('movies-list');
+  for (const movie of movies) {
+    const p = document.createElement('p');
+    const cnt = (movie.id_ in cnt_by_id) ? cnt_by_id[movie.id_] : 0;
+    if (cnt > 0) {
+        p.innerText = movie.title + " - " + movie.network_name + " - " + cnt_by_id[movie.id_];
+        list.appendChild(p);
+    }
+  }
+
+}
+
+initMovies();
+        </script>
+    </body>
+</html>

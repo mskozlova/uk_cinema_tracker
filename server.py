@@ -123,8 +123,9 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
             return
 
         if self.path.startswith('/movies'):
-            text = html_generators.generate_movies_page(self.path, logger)
-            self.send_response(HTTPStatus.ACCEPTED)
+            template = env.get_template("movies.html")
+            text = template.render()
+            self.send_response(HTTPStatus.OK)
             self.send_text(text, "text/html")
             return
 
