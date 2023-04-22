@@ -111,7 +111,7 @@ async function initMap() {
     left_panel.innerHTML = '';
     console.time('Loop over showings');
     const bounds = map.getBounds();
-    const name_filter = document.getElementById("filter_movie_name").value;
+    const name_filter = document.getElementById("filter_movie_name").value.toLowerCase();
     var filtered_showings = [];
     for (const showing of showings) {
         if (!showing.available) {
@@ -122,10 +122,6 @@ async function initMap() {
         }
         const venue = venues_by_id[showing.venue_id];
         const movie = movies_by_id[showing.movie_id];
-        if (!movie) {
-            // TODO: remove when BFI movie ids is fixed
-            continue;
-        }
         if (!venue.available || !movie.available) {
             continue;
         }
