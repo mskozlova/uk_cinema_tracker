@@ -8,14 +8,23 @@
     
         <script type="text/javascript">
 
+function get_movie_name_from_group(group) {
+  var mn = group[0].title;
+  for (const movie of group) {
+    if (mn.length > movie.title.length) {
+      mn = movie.title;
+    }
+  }
+  return mn;
+}
 
-async function initMovies() {
-  const venues = await (await fetch('/venues.json')).json();
-  const movies = await (await fetch('/movies.json')).json();
-  const showings = await (await fetch('/showings.json')).json();
-
+function get_showings_count_by_movie_id(showings) {
   var cnt_by_id = {};
   for (const showing of showings) {
+    if (new Date(showing.start_time_local) < new Date()) {
+      continue;
+    }
+    // TODO: add network_name
     const movie_id = showing.movie_id;
     if (movie_id in cnt_by_id) {
         cnt_by_id[movie_id] += 1;
@@ -23,34 +32,113 @@ async function initMovies() {
         cnt_by_id[movie_id] = 1;
     }
   }
+  return cnt_by_id;
+}
 
-  movies.sort(function(a,b) {
-    const id1 = a.id_;
-    const id2 = b.id_;
-    if (!(id1 in cnt_by_id) && !(id2 in cnt_by_id)) {
-        return 0;
+function normalize_title(title) {
+  const norm_title = title.toLowerCase().replaceAll(/\([^\)]*\)/g, '').replaceAll(/[^a-z]/g, '');
+  return norm_title;
+}
+
+function normalize_colon_title(title, network_name, movies, unique_venues_by_norm_title) {
+  if (!title.includes(':')) {
+    return title;
+  }
+  const before = title.split(':')[0] + ':';
+  const after = normalize_title(title.split(':')[1]);
+  if (before.length < 2 || after.length < 2) {
+    return title;
+  }
+  if (!(after in unique_venues_by_norm_title) || unique_venues_by_norm_title[after].size < 2) {
+    return title;
+  }
+  return after;
+}
+
+function group_movies(movies) {
+  var groups_by_name = {};
+  const unique_venues_by_norm_title = {};
+  for (const movie of movies) {
+    const name = normalize_title(movie.title);
+    if (name in unique_venues_by_norm_title) {
+      unique_venues_by_norm_title[name].add(movie.network_name);
+    } else {
+      unique_venues_by_norm_title[name] = new Set([movie.network_name]);
     }
-    if (!(id1 in cnt_by_id)) {
-        return 1;
+  }
+  for (const movie of movies) {
+    const colon_normalized = normalize_colon_title(movie.title, movie.network_name, movies, unique_venues_by_norm_title);
+    const name = normalize_title(colon_normalized);
+    if (name in groups_by_name) {
+        groups_by_name[name].push(movie);
+    } else {
+        groups_by_name[name] = [movie];
     }
-    if (!(id2 in cnt_by_id)) {
-        return -1;
-    }
-    const cnt1 = cnt_by_id[id1];
-    const cnt2 = cnt_by_id[id2];
+  }
+
+  var groups = []
+  for (const key in groups_by_name) {
+    groups.push(groups_by_name[key]);
+  }
+  return groups;
+}
+
+async function initMovies() {
+  const venues = await (await fetch('/venues.json')).json();
+  const movies = await (await fetch('/movies.json')).json();
+  const showings = await (await fetch('/showings.json')).json();
+
+  var venues_by_id = {};
+  for (const venue of venues) {
+    // TODO: add network_name
+    venues_by_id[venue.id_] = venue;
+  }
+
+  var cnt_by_id = get_showings_count_by_movie_id(showings);
+  var groups = group_movies(movies);
+  groups.sort(function(a,b) {
+    var cnt1 = 0;
+    var cnt2 = 0;
+    for (const movie of a) { cnt1 += (movie.id_ in cnt_by_id) ? cnt_by_id[movie.id_] : 0; }
+    for (const movie of b) { cnt2 += (movie.id_ in cnt_by_id) ? cnt_by_id[movie.id_] : 0; }
     return (cnt1 < cnt2) - (cnt2 < cnt1);
   });
 
   const list = document.getElementById('movies-list');
-  for (const movie of movies) {
+  for (const movie_list of groups) {
     const p = document.createElement('p');
-    const cnt = (movie.id_ in cnt_by_id) ? cnt_by_id[movie.id_] : 0;
-    if (cnt > 0) {
-        p.innerText = movie.title + " - " + movie.network_name + " - " + cnt_by_id[movie.id_];
-        list.appendChild(p);
+    var cnt = 0;
+    var cinemas = '';
+    var name = '';
+    p.innerHTML += get_movie_name_from_group(movie_list) + " - ";
+    for (const movie of movie_list) {
+        const a = document.createElement('a');
+        a.href = movie.link;
+        a.textContent = movie.network_name;
+        p.innerHTML += `<a href="${movie.link}">${movie.network_name}</a>`;
+        p.innerHTML += " ";
+        cnt += (movie.id_ in cnt_by_id) ? cnt_by_id[movie.id_] : 0;
     }
+    if (cnt == 0) {
+      continue;
+    }
+    var spoiler = '';
+    p.innerHTML += " - " + cnt;
+    spoiler += "<details>";
+    spoiler += "<summary>Other names</summary>";
+    spoiler += "<div>"
+    spoiler += "<ul>"
+    for (const movie of movie_list) {
+      spoiler += "<li>" + movie.title + " (" + movie.network_name + ")" + "</li>";
+    }
+    spoiler += "</ul>"
+    spoiler += "</div>";
+    spoiler += "</details>";
+    if (movie_list.length > 1) {
+      p.innerHTML += spoiler;
+    }
+    list.appendChild(p);
   }
-
 }
 
 initMovies();
