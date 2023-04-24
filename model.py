@@ -1,6 +1,7 @@
 import structs
 import sqlite3
 import datetime
+import json
 
 from typing import List
 from typing import Optional
@@ -23,9 +24,13 @@ def save_venues(con: sqlite3.Connection, venues: List[structs.Venue], revision: 
     print(f'Saved {len(venues)} venues')
 
 def save_movies(con: sqlite3.Connection, movies: List[structs.Movie], revision: int):
-    data = [(m.id_.strip(), m.title.strip(), m.network_name, m.link, m.available, revision) for m in movies]
-    con.executemany('INSERT INTO movies(id, title, network_name, link, available, revision) '
-                    'VALUES(?, ?, ?, ?, ?, ?)',
+    def _get_additional_info(m):
+        if m.additional_info is None:
+            return None
+        return json.dumps(m.additional_info)
+    data = [(m.id_.strip(), m.title.strip(), m.network_name, m.link, m.available, _get_additional_info(m), revision) for m in movies]
+    con.executemany('INSERT INTO movies(id, title, network_name, link, available, additional_info, revision) '
+                    'VALUES(?, ?, ?, ?, ?, ?, ?)',
                     data)
     con.commit()
     print(f'Saved {len(movies)} movies')
@@ -39,8 +44,8 @@ def get_venues(con: sqlite3.Connection, revision: int) -> List[structs.Venue]:
     return [structs.Venue(x[0], x[1], x[2], x[3], x[4], x[5], x[6]) for x in res.fetchall()]
 
 def get_movies(con: sqlite3.Connection, revision: int) -> List[structs.Movie]:
-    res = con.execute("select id, title, network_name, link, available from movies where revision = ?", (revision,))
-    return [structs.Movie(x[0], x[1], x[2], x[3], x[4]) for x in res.fetchall()]
+    res = con.execute("select id, title, network_name, link, available, additional_info from movies where revision = ?", (revision,))
+    return [structs.Movie(x[0], x[1], x[2], x[3], x[4], None if x[5] is None else json.loads(x[5])) for x in res.fetchall()]
 
 def get_showings(con: sqlite3.Connection, revision: int) -> List[structs.Showing]:
     res = con.execute("select id, movie_id, venue_id, start_time_local, network_name, link, available from showings where revision = ?", (revision,))

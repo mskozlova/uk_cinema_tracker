@@ -147,7 +147,11 @@ def get_all_movies(**kwargs) -> List[structs.Movie]:
         poster_link = item['image_url']
         normalized_name = re.sub('[^a-z0-9\-]', '', title.lower().replace(' ', '-'))
         link = f'https://www.picturehouses.com/movie-details/{venue_id}/{another_id}/{normalized_name}'
-        movies.append(structs.Movie(id_, title, 'Picturehouse', link, True))
+        additional_info = {
+            'image_link': poster_link,
+            'trailer_link': trailer_link,
+        }
+        movies.append(structs.Movie(id_, title, 'Picturehouse', link, True, additional_info))
     logger.info(f"Got {len(movies)} movies from Picturehouse")
     return movies
 

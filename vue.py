@@ -119,6 +119,8 @@ def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
         id_ = item['id']
         title = item['title']
         poster_link = item['image_poster']
+        if poster_link.startswith('/'):
+            poster_link = 'https://www.myvue.com' + poster_link
         synopsis = item['synopsis_short']
         release_date = item['info_release']
         running_time = item['info_runningtime']
@@ -127,7 +129,12 @@ def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
         link = 'https://www.myvue.com' + item['filmlink']
         trailer_link = item['video']
         available = not item['hidden']
-        movies.append(structs.Movie(id_, title, 'VUE', link, available))
+        additional_info = {
+            'synopsis': synopsis,
+            'image_link': poster_link,
+            'trailer_link': trailer_link,
+        }
+        movies.append(structs.Movie(id_, title, 'VUE', link, available, additional_info))
     logger.info(f"Got {len(movies)} from VUE")
     return movies
 

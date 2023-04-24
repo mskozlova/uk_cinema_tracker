@@ -47,7 +47,7 @@ def get_all_venues(**kwargs) -> List[structs.Venue]:
     return venues
 
 
-def get_all_movies(**kwargs) -> List[structs.Movie]:
+def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
     url = 'https://odeon-vwc.webtrends-optimize.workers.dev/FilmsSchedule'
     headers = {
   'authority': 'odeon-vwc.webtrends-optimize.workers.dev',
@@ -78,7 +78,12 @@ def get_all_movies(**kwargs) -> List[structs.Movie]:
         poster_link = item['GraphicUrl']
         normalized_name = re.sub('[^a-z0-9\-]', '', title.lower().replace(' ', '-'))
         link = f'https://www.odeon.co.uk/films/{normalized_name}/{id_}'
-        movies.append(structs.Movie(id_, title, 'ODEON', link, True))
+        additional_info = {
+            'synopsis': synopsis,
+            'image_link': poster_link,
+            'trailer_link': trailer_link,
+        }
+        movies.append(structs.Movie(id_, title, 'ODEON', link, True, additional_info))
     logger.info(f"Got {len(movies)} movies from ODEON")
     return movies
 

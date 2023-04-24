@@ -120,6 +120,8 @@ def get_all_movies(revision):
     venues = get_all_venues(revision)
     movies_by_id = {}
     for venue in venues:
+        # if 'London' not in venue.name:
+        #     continue
         logger.info(f"Processing venue {venue}")
         dates = get_venue_dates(venue.id_, revision)
         for date in dates:
@@ -132,11 +134,17 @@ def get_all_movies(revision):
                 logger.info(f"Processing {venue.name} movie {name} id={id_}")
                 running_time = item['length']
                 poster_link = item['posterLink']
+                if poster_link.startswith('/'):
+                    poster_link = 'https://www.cineworld.co.uk' + poster_link
                 trailer_link = item['videoLink']
                 link = item['link']
                 release_year = item['releaseYear']
                 name_by_id[id_] = name
-                movies_by_id[id_] = structs.Movie(id_, name, 'Cineworld', link, True)
+                additional_info = {
+                    'image_link': poster_link,
+                    'trailer_link': trailer_link,
+                }
+                movies_by_id[id_] = structs.Movie(id_, name, 'Cineworld', link, True, additional_info)
     movies = list(movies_by_id.values())
     logger.info(f"Got {len(movies)} movies from Cineworld")
     return movies

@@ -21,6 +21,100 @@ def get_all_venues(**kwargs):
         structs.Venue("BFI IMAX", 'BFI IMAX', 'BFI', 51.5048807, -0.1136915, 'https://whatson.bfi.org.uk/imax/Online/default.asp', True),
     ]
 
+def get_synopsis(revision: int, link: str):
+    headers = {
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'Accept-Language': 'ru,en;q=0.9',
+  'Cache-Control': 'max-age=0',
+  'Connection': 'keep-alive',
+  'Content-Type': 'application/x-www-form-urlencoded',
+  'Origin': 'https://whatson.bfi.org.uk',
+  'Referer': f'https://whatson.bfi.org.uk/Online/default.asp',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'same-origin',
+  'Sec-Fetch-User': '?1',
+  'Upgrade-Insecure-Requests': '1',
+  'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
+  'sec-ch-ua-mobile': '?1',
+  'sec-ch-ua-platform': '"Android"',
+    }
+    text = httplib.get_text(revision, link, headers)
+    fallback = None
+    for line in text.split('\n'):
+        line = line.strip()
+        if 'og:description' in line:
+            syn = line.split('content="', 1)[1].rsplit('"', 1)[0].strip()
+            if len(syn) > 5:
+                fallback = syn
+        if 'Page__description' not in line:
+            continue
+        return line.split('>', 1)[1].rsplit('<', 1)[0]
+    if fallback is None:
+        logger.error(f"Cannot find synopsis in {link}")
+    return fallback
+
+def get_image(revision: int, link: str):
+    headers = {
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'Accept-Language': 'ru,en;q=0.9',
+  'Cache-Control': 'max-age=0',
+  'Connection': 'keep-alive',
+  'Content-Type': 'application/x-www-form-urlencoded',
+  'Origin': 'https://whatson.bfi.org.uk',
+  'Referer': f'https://whatson.bfi.org.uk/Online/default.asp',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'same-origin',
+  'Sec-Fetch-User': '?1',
+  'Upgrade-Insecure-Requests': '1',
+  'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
+  'sec-ch-ua-mobile': '?1',
+  'sec-ch-ua-platform': '"Android"',
+    }
+    text = httplib.get_text(revision, link, headers)
+    fallback = None
+    for line in text.split('\n'):
+        line = line.strip()
+        if 'Media__image' not in line:
+            continue
+        image_url = line.split('class="Media__image" src="', 1)[1].rsplit('"', 1)[0]
+        if image_url.startswith('/'):
+            return 'https://whatson.bfi.org.uk' + image_url
+        return image_url
+    logger.error(f"Cannot find image in {link}")
+    return None
+
+def get_trailer(revision: int, link: str):
+    headers = {
+  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
+  'Accept-Language': 'ru,en;q=0.9',
+  'Cache-Control': 'max-age=0',
+  'Connection': 'keep-alive',
+  'Content-Type': 'application/x-www-form-urlencoded',
+  'Origin': 'https://whatson.bfi.org.uk',
+  'Referer': f'https://whatson.bfi.org.uk/Online/default.asp',
+  'Sec-Fetch-Dest': 'document',
+  'Sec-Fetch-Mode': 'navigate',
+  'Sec-Fetch-Site': 'same-origin',
+  'Sec-Fetch-User': '?1',
+  'Upgrade-Insecure-Requests': '1',
+  'User-Agent': 'Mozilla/5.0 (Linux; Android 6.0; Nexus 5 Build/MRA58N) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Mobile Safari/537.36',
+  'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
+  'sec-ch-ua-mobile': '?1',
+  'sec-ch-ua-platform': '"Android"',
+    }
+    text = httplib.get_text(revision, link, headers)
+    fallback = None
+    for line in text.split('\n'):
+        line = line.strip()
+        if '"link": "https://youtu.be' not in line:
+            continue
+        return line.split('"link": "', 1)[1].rsplit('"', 1)[0]
+    return None
+
 def get_movies_from_subsite(revision: int, sub_url: str, venue_id: str, article_search_id: str):
     url = f'https://whatson.bfi.org.uk/{sub_url}Online/default.asp'
     headers = {
@@ -68,7 +162,12 @@ def get_movies_from_subsite(revision: int, sub_url: str, venue_id: str, article_
             else:
                 movie_id = link_info.split('BOparam::WScontent::loadArticle::article_id=')[1].split('&')[0]
                 link = f'https://whatson.bfi.org.uk/{sub_url}Online/default.asp?doWork::WScontent::loadArticle=Load&BOparam::WScontent::loadArticle::article_id=' + movie_id
-            movies_by_id[movie_id] = structs.Movie(movie_id, title, 'BFI', link, True)
+            additional_info = {
+                'synopsis': get_synopsis(revision, link),
+                'image_link': get_image(revision, link),
+                'trailer_link': get_trailer(revision, link),
+            }
+            movies_by_id[movie_id] = structs.Movie(movie_id, title, 'BFI', link, True, additional_info)
     movies = list(movies_by_id.values())
     logger.info(f"Got {len(movies)} movies from BFI {sub_url} {venue_id}")
     return movies

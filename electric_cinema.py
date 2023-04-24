@@ -65,7 +65,7 @@ def get_all_venues(**kwargs):
         venues.append(structs.Venue(id_, name, 'Electric Cinema', lat, lon, link, True))
     return venues
 
-def get_all_movies(**args):
+def get_all_movies(revision: int , **kwargs):
     url = 'https://www.electriccinema.co.uk/data/0000000000000.json'
     headers = {
     'authority': 'www.electriccinema.co.uk',
@@ -86,11 +86,17 @@ def get_all_movies(**args):
     for id_, item in js['films'].items():
         title = item['title']
         poster_link = item['image']
+        if poster_link.startswith('/'):
+            poster_link = 'https://www.electriccinema.co.uk' + poster_link
         link = 'https://www.electriccinema.co.uk' + item['link']
         synopsis = item['short_synopsis']
         release_date = item['premiere']
         director = item['director']
-        movies.append(structs.Movie(id_, title, 'Electric Cinema', link, True))
+        additional_info = {
+            'synopsis': synopsis,
+            'image_link': poster_link,
+        }
+        movies.append(structs.Movie(id_, title, 'Electric Cinema', link, True, additional_info))
     logger.info(f"Got {len(movies)} movies from Electric Cinema")
     return movies
 

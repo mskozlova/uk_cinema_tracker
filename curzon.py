@@ -71,7 +71,11 @@ def get_all_movies(revision, *args):
         trailer_link = item['trailerUrl']
         cast = item['castAndCrew']
         link = f'https://www.curzon.com/films/{id_}/'
-        movies.append(structs.Movie(id_, title, 'Curzon', link, True))
+        additional_info = {
+            'synopsis': synopsis,
+            'trailer_link': trailer_link,
+        }
+        movies.append(structs.Movie(id_, title, 'Curzon', link, True, additional_info))
     logger.info(f"Got {len(movies)} movies from Curzon")
     return movies
 

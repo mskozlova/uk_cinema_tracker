@@ -18,6 +18,45 @@ function get_movie_name_from_group(group) {
   return mn;
 }
 
+function get_movie_image_link_from_group(group) {
+  for (const movie of group) {
+    if (movie.additional_info && movie.additional_info.image_link) {
+      return movie.additional_info.image_link;
+    }
+  }
+  return 'https://upload.wikimedia.org/wikipedia/commons/d/d1/Image_not_available.png';
+}
+
+function get_movie_trailer_link_from_group(group) {
+  for (const movie of group) {
+    if (movie.additional_info && movie.additional_info.trailer_link) {
+      // TODO: remove when Everyman links are fixed
+      if (typeof movie.additional_info.trailer_link === 'string') {
+        return movie.additional_info.trailer_link;
+      }
+    }
+  }
+  return null;
+}
+
+function transform_youtube_link_for_embed(trailer_link) {
+  // https://youtu.be/hPIzgZ16oac
+  var id = trailer_link.split('/')[3];
+  if (id.includes('v=')) {
+    id = id.split('v=')[1].split('&')[0];
+  }
+  return `https://www.youtube.com/embed/${id}`;
+}
+
+function get_movie_synopsis_from_group(group) {
+  for (const movie of group) {
+    if (movie.additional_info && movie.additional_info.synopsis) {
+      return movie.additional_info.synopsis;
+    }
+  }
+  return null;
+}
+
 function get_showings_count_by_movie_id(showings) {
   var cnt_by_id = {};
   for (const showing of showings) {
@@ -108,8 +147,12 @@ async function initMovies() {
   for (const movie_list of groups) {
     const p = document.createElement('p');
     var cnt = 0;
-    var cinemas = '';
-    var name = '';
+    const image_link = get_movie_image_link_from_group(movie_list);
+    if (image_link != null) {
+      p.innerHTML += `<p><img src="${image_link}" height="200px" loading="lazy"></p>`
+    }
+    const trailer_link = get_movie_trailer_link_from_group(movie_list);
+    const synopsis = get_movie_synopsis_from_group(movie_list);
     p.innerHTML += get_movie_name_from_group(movie_list) + " - ";
     for (const movie of movie_list) {
         const a = document.createElement('a');
@@ -137,6 +180,21 @@ async function initMovies() {
     if (movie_list.length > 1) {
       p.innerHTML += spoiler;
     }
+    if (trailer_link != null) {
+      var trailer = '';
+      trailer += "<details>";
+      trailer += "<summary>Trailer</summary>";
+      trailer += `<div><a href="${trailer_link}">Link</a></div>`;
+      const youtube_link = transform_youtube_link_for_embed(trailer_link);
+      trailer += `<iframe width="420" height="315" src="${youtube_link}" loading="lazy"> </iframe>`;
+      trailer += "</details>";
+      p.innerHTML += trailer;
+    }
+    if (synopsis != null) {
+      p.innerHTML += "<p>Synopsis</p>";
+      p.innerHTML += `<p>${synopsis}</p>`;
+    }
+    p.innerHTML += '<hr>';
     list.appendChild(p);
   }
 }

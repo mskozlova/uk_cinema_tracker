@@ -19,6 +19,7 @@ class Movie:
     network_name: str
     link: Optional[str]
     available: bool = True
+    additional_info: Optional[dict] = None
 
 @dataclasses.dataclass
 class Showing:

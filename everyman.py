@@ -44,8 +44,16 @@ def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
         release_date = item['release']
         running_time = item['runtime']
         synopsis = item['synopsis']
-        trailer_link = item['trailer']
-        movies.append(structs.Movie(id_, title, 'Everyman', link, True))
+        trailer_links = item['trailer']
+        trailer_link = trailer_links.get('youtube') or trailer_links.get('HD') or trailer_links.get('SD')
+        if isinstance(trailer_link, list):
+            trailer_link = trailer_link[0]
+        additional_info = {
+            'synopsis': synopsis,
+            'image_link': poster_link,
+            'trailer_link': trailer_link,
+        }
+        movies.append(structs.Movie(id_, title, 'Everyman', link, True, additional_info))
     logger.info(f"Got {len(movies)} movies from Everyman")
     return movies
 
