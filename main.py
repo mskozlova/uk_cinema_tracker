@@ -59,6 +59,7 @@ def main():
             for task in failed:
                 exc = task.exception()
                 if exc:
+                    print(f"Exception: {exc}", exc_info=exc)
                     logger.error(f"Exception: {exc}", exc_info=exc)
                     task.result()
                     exit(1)
