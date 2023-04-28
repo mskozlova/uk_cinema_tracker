@@ -119,7 +119,7 @@ def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
         id_ = item['id']
         title = item['title']
         poster_link = item['image_poster']
-        if poster_link.startswith('/'):
+        if poster_link.startswith('/') and not poster_link.startswith('//'):
             poster_link = 'https://www.myvue.com' + poster_link
         synopsis = item['synopsis_short']
         release_date = item['info_release']
