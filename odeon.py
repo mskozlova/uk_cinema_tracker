@@ -137,6 +137,9 @@ def get_all_showings(revision: int, **kwargs) -> List[structs.Showing]:
         title = item['Title']
         movie_id = item['ID']
         logger.info(f"Processing movie {title}")
+        if 'sessions' not in item:
+            logger.error(f"No sessions for movie {title}")
+            continue
         for session in item['sessions']:
             venue_id = session['CinemaId']
             logger.info(f"Processing {title} showings in {venue_id}")
