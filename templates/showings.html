@@ -89,7 +89,9 @@ async function initMap() {
 
   const venues = await (await fetch('/venues.json')).json();
   const movies = await (await fetch('/movies.json')).json();
-  const showings = await (await fetch('/showings.json')).json();
+  console.time('Getting gziped showings');
+  const showings = await new Response(await ((await fetch('/showings.json.gz').then((response) => response.body)).pipeThrough(new DecompressionStream('gzip')))).json();
+  console.timeEnd('Getting gziped showings');
   var movies_by_id = {};
   for (const movie of movies) {
     const id = movie.id_;

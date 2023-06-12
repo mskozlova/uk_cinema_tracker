@@ -1,6 +1,7 @@
 import json
 import sqlite3
 import dataclasses
+import gzip
 
 from http import HTTPStatus
 from http.server import HTTPServer
@@ -46,6 +47,11 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Type", f"{content_type};charset=utf-8")
         self.end_headers()
         self.wfile.write(text.encode("UTF-8", "replace"))
+
+    def send_bytes(self, payload: bytes):
+        self.send_header("Content-Type", f"application/octet-stream")
+        self.end_headers()
+        self.wfile.write(payload)
 
     def send_error(self, code: int, message: str = None, explain: str = None):
         try:
@@ -93,6 +99,18 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
             text = json.dumps(movies_dicts)
             self.send_response(HTTPStatus.OK)
             self.send_text(text, "application/json")
+            return
+
+        if self.path.startswith('/showings.json.gz'):
+            with sqlite3.connect('movies.db') as con:
+                all_revisions = model.get_all_revisions(con)
+                rev = all_revisions[-1] if all_revisions else 1
+                showings = model.get_showings(con, rev)
+            showings_dicts = [dataclasses.asdict(showing) for showing in showings]
+            text = json.dumps(showings_dicts)
+            gzipped = gzip.compress(text.encode(), 5)
+            self.send_response(HTTPStatus.OK)
+            self.send_bytes(gzipped)
             return
         
         if self.path.startswith('/showings.json'):
