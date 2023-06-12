@@ -133,8 +133,6 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
                 rev = all_revisions[-1] if all_revisions else 1
                 venues = model.get_venues(con, rev)
             venues_dicts = [dataclasses.asdict(venue) for venue in venues if venue.available]
-            for venue in venues:
-                print(venue.network_name, venue.name, venue.lat, venue.lon)
             text = template.render(the="variables", go="here", venues = venues_dicts)
             self.send_response(HTTPStatus.ACCEPTED)
             self.send_text(text, "text/html")
