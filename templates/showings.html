@@ -2,6 +2,7 @@
     <head>
         <title>Showings</title>
         <script src="https://polyfill.io/v3/polyfill.min.js?features=default"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     
         <style>
 /*
@@ -90,7 +91,14 @@ async function initMap() {
   const venues = await (await fetch('/venues.json')).json();
   const movies = await (await fetch('/movies.json')).json();
   console.time('Getting gziped showings');
-  const showings = await new Response(await ((await fetch('/showings.json.gz').then((response) => response.body)).pipeThrough(new DecompressionStream('gzip')))).json();
+  let showings;
+  if ('DecompressionStream' in window) {
+    console.log('using decom stream');
+    showings = await new Response(await ((await fetch('/showings.json.gz').then((response) => response.body)).pipeThrough(new DecompressionStream('gzip')))).json();
+  } else {
+    console.log('using pako');
+    showings = await new Response(pako.inflate(await (await fetch('/showings.json.gz')).arrayBuffer())).json();
+  }
   console.timeEnd('Getting gziped showings');
   var movies_by_id = {};
   for (const movie of movies) {
