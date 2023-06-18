@@ -73,6 +73,13 @@ class CliServiceRequestHandler(BaseHTTPRequestHandler):
             self.send_response(HTTPStatus.NOT_FOUND)
             return
 
+        if self.path == '/':
+            template = env.get_template("index.html")
+            text = template.render()
+            self.send_response(HTTPStatus.OK)
+            self.send_text(text, "text/html")
+            return
+
         if self.path.startswith('/compare'):
             text = html_generators.generate_diff_page(self.path, logger)
             self.send_response(HTTPStatus.ACCEPTED)

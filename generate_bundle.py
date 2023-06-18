@@ -49,6 +49,9 @@ def main():
     showings_html = env.get_template("showings.html").render()
     with open(f'{DIR}/showings.html', 'w') as f:
         f.write(showings_html)
+    index_html = env.get_template("index.html").render()
+    with open(f'{DIR}/index.html', 'w') as f:
+        f.write(index_html)
 
 if __name__ == '__main__':
     try:
