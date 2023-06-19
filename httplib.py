@@ -1,5 +1,7 @@
 import requests
 import time
+import json
+import random
 
 from functools import lru_cache
 from functools import wraps
@@ -21,7 +23,7 @@ def retry(times=5):
                         '%d of %d. Sleeping for %f seconds' % (func, attempt, times, sleep_time)
                     )
                     attempt += 1
-                    time.sleep(sleep_time)
+                    time.sleep(sleep_time + random.random())
                     sleep_time *= 2.0
             return func(*args, **kwargs)
         return newfn
@@ -42,12 +44,26 @@ def hash_dict(func):
 @hash_dict
 @lru_cache
 @retry()
-def get_json(revision: int, url: str, additional_headers: dict={}) -> dict:
+def get_json(revision: int, url: str, additional_headers: dict={}, use_proxy=False) -> dict:
     headers = {
         **HEADERS,
         **additional_headers,
     }
-    r = requests.get(url, headers=headers)
+    if not use_proxy:
+        r = requests.get(url, headers=headers)
+    else:
+        func_url = 'https://functions.yandexcloud.net/d4e5ltvrso9hp4qk0bg3'
+        func_headers = {
+            'Authorization': 'Api-Key AQVNyBGKQ8Y_VUQSQxYbrPxlfYdwWv08h3u6-yLa'
+        }
+        func_data = {
+            "method": "GET",
+            "url": url,
+            "headers": headers,
+        }
+        r = requests.post(func_url, json=func_data, headers=func_headers)
+        time.sleep(1.0 + random.random())
+        return json.loads(r.json()['response']['text'])
     time.sleep(0.1)
     return r.json()
 
