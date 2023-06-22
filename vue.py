@@ -45,7 +45,7 @@ def get_venue_location(revision, venue_link_name):
     raise Exception(f'Cannot find directions to {venue_link_name} VUE cinema')
 
 def get_all_venues(revision: int, **kwargs) -> List[structs.Venue]:
-    url = 'https://www.myvue.com/data/locations/'
+    url = 'https://www.myvue.com/api/microservice/showings/cinemas'
     headers = {
   'authority': 'www.myvue.com' ,
   'accept': '*/*' ,
@@ -62,15 +62,14 @@ def get_all_venues(revision: int, **kwargs) -> List[structs.Venue]:
     }
     js = httplib.get_json(revision, url, headers)
     all_venues = []
-    for item in js['venues']:
+    for item in js['result']:
         for cinema in item['cinemas']:
-            id_ = cinema['id']
-            name = cinema['search_term']
-            available = not cinema['hidden']
-            link_name = cinema['link_name']
-            lat, lon = get_venue_location(revision, link_name)
+            id_ = cinema['cinemaId']
+            name = cinema['cinemaName']
+            link_name = cinema['whatsOnUrl'].split('/')[4]
+            lat = lon = None
             link = f'https://www.myvue.com/cinema/{link_name}/about'
-            all_venues.append(structs.Venue(id_, name, 'VUE', lat, lon, link, available))
+            all_venues.append(structs.Venue(id_, name, 'VUE', lat, lon, link, True))
     return all_venues
 
 def get_venue_ids(revision: int):
@@ -103,7 +102,7 @@ def get_venue_ids(revision: int):
     return venues
 
 def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
-    url = 'https://www.myvue.com/data/filmswithshowings/'
+    url = 'https://www.myvue.com/api/microservice/showings/films'
     headers = {
   'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
   'Referer': 'https://www.myvue.com/whats-on',
@@ -114,25 +113,20 @@ def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
     }
     js = httplib.get_json(revision, url, headers)
     movies = []
-    for item in js['films']:
-        del item['showings']
-        id_ = item['id']
-        title = item['title']
-        poster_link = item['image_poster']
-        if poster_link.startswith('/') and not poster_link.startswith('//'):
-            poster_link = 'https://www.myvue.com' + poster_link
-        synopsis = item['synopsis_short']
-        release_date = item['info_release']
-        running_time = item['info_runningtime']
-        director = item['info_director']
-        cast = item['info_cast']
-        link = 'https://www.myvue.com' + item['filmlink']
-        trailer_link = item['video']
-        available = not item['hidden']
+    for item in js['result']:
+        id_ = item['filmId']
+        title = item['filmTitle']
+        poster_link = item['posterImageSrc']
+        synopsis = item['synopsisShort']
+        release_date = item['releaseDate']
+        running_time = item['runningTime']
+        director = item['director']
+        cast = item['cast']
+        link = item['filmUrl']
+        available = item['hasSessions']
         additional_info = {
             'synopsis': synopsis,
             'image_link': poster_link,
-            'trailer_link': trailer_link,
         }
         movies.append(structs.Movie(id_, title, 'VUE', link, available, additional_info))
     logger.info(f"Got {len(movies)} from VUE")
@@ -161,8 +155,8 @@ def get_movie_ids(revision: int):
     return movies
     
 
-def get_movie_showings(revision: int, movie_id, venue_id):
-    url = f'https://www.myvue.com/data/showings/{movie_id}/{venue_id}'
+def get_movie_showings(revision: int, venue_id):
+    url = f'https://www.myvue.com/api/microservice/showings/cinemas/{venue_id}/films'
     headers = {
   'sec-ch-ua': '"Not.A/Brand";v="8", "Chromium";v="114", "YaBrowser";v="23"',
   'Referer': 'https://www.myvue.com/film/insidious-the-red-door/times',
@@ -173,35 +167,31 @@ def get_movie_showings(revision: int, movie_id, venue_id):
     }
     js = httplib.get_json(revision, url, headers)
     showings = []
-    for item in js['showings']:
-        date = item['date_time']
-        for time_item in item['times']:
-            start_time = time_item['time']
-            screen_name = time_item['screen_name']
-            screen_type = time_item['screen_type']
-            # time_item['hidden'] or time_item['disabled']
-            price = time_item['default_price']
-            id_ = time_item['session_id']
-            link = f'https://www.myvue.com/book-tickets/summary/{venue_id}/{movie_id}/{id_}'
-            showings.append(structs.Showing(id_, movie_id, venue_id, build_datetime(date, start_time), 'VUE', link, True))
+    for item in js['result']:
+        movie_id = item['filmId']
+        for showing_group in item['showingGroups']:
+            date = showing_group['date']
+            for showing in showing_group['sessions']:
+                start_time = showing['startTime']
+                price = showing['formattedPrice']
+                id_ = showing['sessionId']
+                link = f'https://www.myvue.com' + showing['bookingUrl']
+                available = showing['isBookingAvailable']
+                showings.append(structs.Showing(id_, movie_id, venue_id, build_datetime(date, start_time), 'VUE', link, available))
     return showings
 
 def build_datetime(date, time):
     return datetime.datetime.strptime(f'{date} {time}', '%Y-%m-%d %I:%M %p')
 
 def get_all_showings(revision: int, **kwargs) -> List[structs.Showing]:
-    movies = get_movie_ids(revision)
-    venues = get_venue_ids(revision)
+    venues = get_all_venues(revision)
 
     all_showings = []
 
-    for venue_id, venue_name in venues:
+    for venue in venues:
+        venue_name = venue.name
+        venue_id = venue.id_
         logger.info(f"Processing {venue_name}")
-        ###########
-        # if 'London' not in venue_name:
-        #     continue
-        ###########
-        for movie_id, movie_name in movies:
-            showings = get_movie_showings(revision, movie_id, venue_id)
-            all_showings.extend(showings)
+        showings = get_movie_showings(revision, venue_id)
+        all_showings.extend(showings)
     return all_showings
