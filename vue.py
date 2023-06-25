@@ -184,6 +184,7 @@ def build_datetime(date, time):
     return datetime.datetime.strptime(f'{date} {time}', '%Y-%m-%d %I:%M %p')
 
 def get_all_showings(revision: int, **kwargs) -> List[structs.Showing]:
+    return []
     venues = get_all_venues(revision)
 
     all_showings = []
