@@ -129,7 +129,7 @@ def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
             'image_link': poster_link,
         }
         movies.append(structs.Movie(id_, title, 'VUE', link, available, additional_info))
-    logger.info(f"Got {len(movies)} from VUE")
+    logger.info(f"Got {len(movies)} movies from VUE")
     return movies
 
 def get_movie_ids(revision: int):
