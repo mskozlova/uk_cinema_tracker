@@ -62,6 +62,9 @@ def get_all_venues(revision: int, **kwargs) -> List[structs.Venue]:
     }
     js = httplib.get_json(revision, url, headers)
     all_venues = []
+    if 'result' not in js:
+        logger.error("No result in venues response")
+        return []
     for item in js['result']:
         for cinema in item['cinemas']:
             id_ = cinema['cinemaId']
@@ -113,6 +116,9 @@ def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
     }
     js = httplib.get_json(revision, url, headers)
     movies = []
+    if 'result' not in js:
+        logger.error("No result in movies response")
+        return []
     for item in js['result']:
         id_ = item['filmId']
         title = item['filmTitle']
@@ -167,6 +173,9 @@ def get_movie_showings(revision: int, venue_id):
     }
     js = httplib.get_json(revision, url, headers)
     showings = []
+    if 'result' not in js:
+        logger.error("No result in showings response")
+        return []
     for item in js['result']:
         movie_id = item['filmId']
         for showing_group in item['showingGroups']:
