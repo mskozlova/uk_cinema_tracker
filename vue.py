@@ -116,7 +116,7 @@ def get_all_movies(revision: int, **kwargs) -> List[structs.Movie]:
     }
     js = httplib.get_json(revision, url, headers)
     movies = []
-    if 'result' not in js:
+    if 'result' not in js or not js['result']:
         logger.error("No result in movies response")
         return []
     for item in js['result']:

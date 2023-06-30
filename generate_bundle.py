@@ -21,6 +21,7 @@ def main():
     with sqlite3.connect('movies.db') as con:
         all_revisions = model.get_all_revisions(con)
         rev = all_revisions[-1] if all_revisions else 1
+        print(f"rev = {rev}")
         venues = model.get_venues(con, rev)
         movies = model.get_movies(con, rev)
         showings = model.get_showings(con, rev)

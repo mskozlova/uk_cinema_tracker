@@ -75,8 +75,12 @@ def get_all_venues(**kwargs) -> List[structs.Venue]:
             lon = None
             available = False
         else:
-            lat = float(item['latitude'])
-            lon = float(item['longitude'])
+            try:
+                lat = float(item['latitude'])
+                lon = float(item['longitude'])
+            except:
+                logger.error(f"failed to parse lat and lon from: {item}")
+                lat = lon = 0.0
             available = bool(item['is_active'])
         normalized_name = city + " " + venue_name.replace(city, '')
         link = 'https://www.picturehouses.com/cinema/' + item['slug']

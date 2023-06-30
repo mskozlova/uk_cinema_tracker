@@ -65,7 +65,7 @@ def get_all_movies(revision, *args):
     for item in js['films']:
         id_ = item['id']
         title = item['title']['text']
-        synopsis = item['synopsis']['text']
+        synopsis = item['synopsis']['text'] if item['synopsis'] else None
         release_date = item['releaseDate']
         running_time = item['runtimeInMinutes']
         trailer_link = item['trailerUrl']
