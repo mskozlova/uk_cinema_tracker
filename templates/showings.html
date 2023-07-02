@@ -135,6 +135,9 @@ async function initMap() {
         if (!venue.available || !movie.available) {
             continue;
         }
+        if (!venue.lat || !venue.lon) {
+            continue;
+        }
         const position = {lat: venue.lat, lng: venue.lon};
         if (!bounds.contains(position)) {
             continue;
@@ -186,6 +189,9 @@ async function initMap() {
         icon = icons[icons.length - 1];
         icon.width = 20;
         icon.src = icon_url;
+    }
+    if (!venue.lat || !venue.lon) {
+        continue;
     }
     markers.push(new AdvancedMarkerView({
         map: map,

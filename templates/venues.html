@@ -98,6 +98,9 @@ async function initMap() {
             continue;
         }
         const bounds = map.getBounds();
+        if (!venue.lat || !venue.lon) {
+          continue;
+        }
         const position = {lat: venue.lat, lng: venue.lon};
         if (bounds.contains(position)) {
             const title = venue.network_name + " - " + venue.name;
@@ -121,6 +124,9 @@ async function initMap() {
         icon = icons[icons.length - 1];
         icon.width = 20;
         icon.src = icon_url;
+    }
+    if (!venue.lat || !venue.lon) {
+      continue;
     }
     markers.push(new AdvancedMarkerView({
         map: map,
