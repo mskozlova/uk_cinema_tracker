@@ -1,0 +1,5 @@
+14 2 * * * cd /home/basil8/projects/movies && bash truncate_db.sh
+44 2 * * * cd /home/basil8/projects/movies && bash cleanup_logs.sh
+14 3 * * * cd /home/basil8/projects/movies && bash backup_db.sh
+14 4 * * * cd /home/basil8/projects/movies && python3 main.py
+14 8 * * * cd /home/basil8/projects/movies && python3 generate_bundle.py
