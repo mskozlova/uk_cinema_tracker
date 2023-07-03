@@ -62,7 +62,7 @@ def get_all_venues(revision: int, **kwargs) -> List[structs.Venue]:
     }
     js = httplib.get_json(revision, url, headers)
     all_venues = []
-    if 'result' not in js:
+    if 'result' not in js or not js['result']:
         logger.error("No result in venues response")
         return []
     for item in js['result']:
