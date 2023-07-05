@@ -1,11 +1,11 @@
-import vue
-import odeon
-import cineworld
-import picturehouse
-import bfi
-import curzon
-import electric_cinema
-import everyman
+import cinemas.vue as vue
+import cinemas.odeon as odeon
+import cinemas.cineworld as cineworld
+import cinemas.picturehouse as picturehouse
+import cinemas.bfi as bfi
+import cinemas.curzon as curzon
+import cinemas.electric_cinema as electric_cinema
+import cinemas.everyman as everyman
 import sqlite3
 import datetime
 import concurrent.futures
